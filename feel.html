@@ -324,6 +324,7 @@ body.shaking{ animation:none; }
   /* dark-window version: colors flip — text lightens on hover, picked = light gradient */
   .ynrow-dark .ynbtn{ color:rgba(255,255,255,.6); border-color:rgba(255,255,255,.28); }
   .ynrow-dark .ynbtn:hover{ color:#fff; background:rgba(255,255,255,.08); }
+  .ynrow-dark .ynbtn.picked:hover{ background:#fff; color:#000; }
   .ynrow-dark .ynbtn.picked{ background:linear-gradient(160deg,rgba(255,255,255,.92),rgba(220,220,220,.98));
     color:#1a1a1a; border-color:transparent; }
   .ynrow-dark.locked .ynbtn:not(.picked):hover{ color:rgba(255,255,255,.6); background:transparent; }
@@ -7026,24 +7027,42 @@ function breakSystem(fromWin, talk, label){
     }catch(e){}
   };
   errBuzz();   // the first denial sounds the moment "open anyway" breaks the system
+  const t0=Date.now();
+  const phase=()=>{ const e=(Date.now()-t0)/1000; return e<4?0:(e<10?1:2); };   // pour -> storm -> explosion
+  const SPEED=[0.7, 0.28, 0.09];   // phase multipliers — the event ACCELERATES hard
+  const FULLW=()=>document.documentElement.clientWidth;   // innerWidth excludes the console strip — the meltdown does NOT
+  const every=(fn, base)=>{
+    const loop=()=>{ fn(); timers.push(setTimeout(loop, Math.max(70, base*SPEED[phase()]*(0.7+Math.random()*0.6)))); };
+    timers.push(setTimeout(loop, base));
+  };
+  const overConsole=(w)=>{ w.style.zIndex=(1950000+(++z)); };   // the error owns the WHOLE screen — console included
   const cloneMsg=()=>{
     errBuzz();
-    const w=makeWin('trap','',340);
+    const cw = 240 + (Math.random()*280|0);              // real size mix — small notes to big slabs
+    const w=makeWin('trap','',cw);
     w.classList.add('trapdoor');
     w.style.pointerEvents='none';
-    _cx += 22 + Math.random()*8;   // step down-right each time
-    _cy += 20 + Math.random()*8;
-    if(_cx > innerWidth-360 || _cy > innerHeight-160){   // wrap back to a fresh start
-      _cx = 40 + Math.random()*120;
-      _cy = 80 + Math.random()*100;
+    overConsole(w);
+    if(phase()>=1 && Math.random()<0.65){
+      // storm phase: most clones tear loose and land ANYWHERE — full-bleed, console strip included
+      w.style.left=(Math.random()*Math.max(40, FULLW()-cw+140)-70)+'px';
+      w.style.top =(Math.random()*Math.max(60, innerHeight-120)-30)+'px';
+    } else {
+      _cx += 22 + Math.random()*8;   // step down-right each time
+      _cy += 20 + Math.random()*8;
+      if(_cx > FULLW()-300 || _cy > innerHeight-160){   // wrap back to a fresh start
+        _cx = 40 + Math.random()*120;
+        _cy = 80 + Math.random()*100;
+      }
+      w.style.left=_cx+'px'; w.style.top=_cy+'px';
     }
-    w.style.left=_cx+'px'; w.style.top=_cy+'px';
     w.insertAdjacentHTML('beforeend',
       '<div class="body" style="padding:14px 30px 24px"><div class="log">'+errText
       + '<div class="ynrow ynrow-dark"><button class="ynbtn" data-v="open">open anyway</button></div>'
       + '</div></div>');
   };
-  timers.push(setInterval(cloneMsg, 350));   // fast — they stack quickly
+  every(cloneMsg, 300);   // starts as a drip, ends as a hammer
+  every(cloneMsg, 460);   // a second stream — by the storm they interleave into a wall
 
   const fakeState={ score:{}, log:[], eyeWins:[], eyeKind:'eye' };
   const KINDS=['eye','eyeR','ear','neck','mouth','nose','hair'];
@@ -7052,6 +7071,9 @@ function breakSystem(fromWin, talk, label){
     const ev = openEye(fakeState, KINDS[Math.random()*KINDS.length|0], true);
     // random filter on each error eye — sometimes none, for variety
     if(ev && Math.random() < 0.7) ev.classList.add(FX_FILTERS[Math.random()*FX_FILTERS.length|0]);
+    if(ev){ ev.style.zIndex=(1950000+(++z));
+      ev.style.left=(Math.random()*Math.max(40, FULLW()-ev.offsetWidth+120)-60)+'px';
+      ev.style.top =(Math.random()*Math.max(60, innerHeight-ev.offsetHeight+60)-20)+'px'; }
     return ev;
   };
 
@@ -7067,15 +7089,19 @@ function breakSystem(fromWin, talk, label){
     { q:"Who closed this door", a:"You did. you just forgot." },
     { q:"Is it better not knowing", a:"It always was." },
   ];
+  const flingFull=(w)=>{ w.style.left=(Math.random()*Math.max(40, FULLW()-w.offsetWidth+120)-60)+'px';
+    w.style.top=(Math.random()*Math.max(60, innerHeight-160))+'px'; };
   const spawnThought=()=>{
-    const w=makeWin('journal thought','',360);
+    const w=makeWin('journal thought','',300+(Math.random()*160|0));
+    overConsole(w); flingFull(w);
     w.querySelector('.bar')?.remove(); w.style.pointerEvents='none';
     w.insertAdjacentHTML('beforeend','<div class="body"><div class="log"><div class="sys"></div></div></div>');
     typeInto(w.querySelector('.sys'), THOUGHTS[Math.random()*THOUGHTS.length|0]);
   };
   const spawnQA=()=>{
     const item=QAS[Math.random()*QAS.length|0];
-    const w=makeWin('trap','',380);
+    const w=makeWin('trap','',320+(Math.random()*180|0));
+    overConsole(w); flingFull(w);
     w.querySelector('.bar')?.remove(); w.style.pointerEvents='none';
     w.insertAdjacentHTML('beforeend','<div class="body"><div class="log"><div class="qline"></div></div></div>');
     const logEl=w.querySelector('.log');
@@ -7085,28 +7111,34 @@ function breakSystem(fromWin, talk, label){
     });
   };
 
-  // build the flavor — all rates are SLOW so it pours in, never floods at once
+  // build the flavor — each keeps its identity, but ALL of them escalate:
+  // a slow pour for a few seconds, then a storm, then a full explosion.
   if(flavor==='songs'){
     playSound('fear');
-    timers.push(setInterval(()=> playSound(Math.random()<0.5?'fear':'love'), 2600));
-    timers.push(setInterval(eye, 1400));   // a few eyes only
+    every(()=> playSound(Math.random()<0.5?'fear':'love'), 2200);
+    every(eye, 700);
+    every(eye, 900);
   } else if(flavor==='thoughts'){
     timers.push(setTimeout(spawnThought, 900));
-    timers.push(setInterval(spawnThought, 2400));
-    timers.push(setInterval(eye, 1600));
+    every(spawnThought, 1300);
+    every(spawnThought, 1700);
+    every(eye, 800);
   } else if(flavor==='qa'){
     timers.push(setTimeout(spawnQA, 1100));
-    timers.push(setInterval(spawnQA, 3000));
-    timers.push(setInterval(eye, 1600));
+    every(spawnQA, 1500);
+    every(spawnQA, 2100);
+    every(eye, 800);
   } else if(flavor==='sparse'){
-    timers.push(setInterval(eye, 1800));   // missing something — almost empty
+    every(eye, 600);   // missing something — no words, but the EYES flood everything
+    every(eye, 800);
   } else { // mixed
     playSound('fear');
-    timers.push(setInterval(()=> playSound(Math.random()<0.5?'fear':'love'), 3400));
-    timers.push(setInterval(eye, 500));
+    every(()=> playSound(Math.random()<0.5?'fear':'love'), 2400);
+    every(eye, 400);
+    every(eye, 650);
     timers.push(setTimeout(spawnThought, 1000));
-    timers.push(setTimeout(spawnQA, 2000));
-    timers.push(setInterval(()=>{ Math.random()<0.5 ? spawnThought() : spawnQA(); }, 3200));
+    timers.push(setTimeout(spawnQA, 1600));
+    every(()=>{ Math.random()<0.5 ? spawnThought() : spawnQA(); }, 1400);
   }
 
 // hard cut: a final glitch burst, then clear EVERYTHING incl. all audio.
@@ -7919,14 +7951,14 @@ addEventListener('keydown', (e)=>{
     box=document.createElement('div');
     box.className='win';
     box.style.cssText='position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:5000000;'+
-      'width:440px;max-width:86vw;animation:none;';
+      'width:330px;max-width:74vw;animation:none;';
     box.innerHTML='<div class="bar"><div class="dots"><span class="dot" data-x>'+XSVG+'</span></div></div>'+
-      '<div class="body" style="text-align:center;padding:18px 26px 26px">'+
-      '<div style="font-size:20px;color:rgba(255,255,255,.92);margin-bottom:10px">Are you still there?</div>'+
+      '<div class="body" style="text-align:left;padding:3px 30px 30px">'+
+      '<div style="font-size:18px;color:rgba(255,255,255,.92);margin-bottom:10px">Are you still there?</div>'+
       '<div style="font-size:13px;color:rgba(255,255,255,.6);line-height:1.6">No activity detected. the system will<br>start over in <span data-n>60</span> seconds.</div>'+
-      '<div class="ynrow ynrow-dark" style="margin-top:30px">'+
-      '<button class="ynbtn picked" data-stay style="width:160px;white-space:nowrap">I\u2019m still here</button>'+
-      '<button class="ynbtn" data-go style="width:160px;white-space:nowrap">Start over</button></div></div>';
+      '<div class="ynrow ynrow-dark" style="margin-top:22px">'+
+      '<button class="ynbtn" data-go style="width:115px;white-space:nowrap">Restart</button>'+
+      '<button class="ynbtn picked" data-stay style="width:115px;white-space:nowrap">Cancel</button></div></div>';
     document.body.appendChild(box);
     const n=box.querySelector('[data-n]');
     cd=setInterval(()=>{ if(--left<=0){ closeBox(); location.reload(); } else n.textContent=left; }, 1000);
@@ -7937,6 +7969,8 @@ addEventListener('keydown', (e)=>{
   };
   ['mousemove','mousedown','keydown','touchstart'].forEach(ev=>
     addEventListener(ev, ()=>{ if(!box) arm(); }, true));   // while the dialog is up, only its buttons decide
+  // TEMP TEST SHORTCUT — press "e" to fire the error meltdown now. DELETE before submit.
+  addEventListener('keydown',(e)=>{ if(e.key==='e' && !e.metaKey && !e.ctrlKey && !e.altKey) breakSystem(null, Math.random()<0.5, 'I never sent it'); });
   // TEMP TEST SHORTCUT — press "i" to open the idle dialog now. DELETE before submit.
   addEventListener('keydown',(e)=>{ if(e.key==='i' && !e.metaKey && !e.ctrlKey && !e.altKey) showBox(); });
   arm();
