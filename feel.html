@@ -85,6 +85,8 @@ body.shaking{ animation:none; }
 .folder .lbl{ font-size:13px; font-weight:400; line-height:1.4;
                 text-align:center; transition:color .25s ease;
                 max-width:none; white-space:nowrap; }
+  /* double-click must OPEN, never paint the label blue */
+  .folder, .folder .lbl, .subfolder, .subfolder .lbl{ -webkit-user-select:none; user-select:none; }
   .folder:hover .ico{ transform:translateY(-6px) scale(1.18);
                 filter:brightness(2.2); }
   .folder:hover .lbl{ color:#fff; }
@@ -1925,7 +1927,7 @@ function startJourney(steps, startTitle, fallAt, camKind, endEmo, fearRoom, intr
     }
     // FINAL BURST: fear PATHS flood the screen (my safety etc.) — no matter which
     // room the system picked. the pick is still resolved here, before the room opens.
-    window._nextRoomPick = chooseNextRoom();
+    if(!window._nextRoomPick) window._nextRoomPick = chooseNextRoom();
     if(emo === 'fear' || state.fearRoom){
       // if a song is still playing, cut it now — the flood should be silent, not scored to the last song
       if(currentAudio){ try{ currentAudio.pause(); currentAudio.currentTime=0; }catch(e){} }
@@ -7739,7 +7741,42 @@ function closeRoomForFolder(){
   document.querySelectorAll('.folder.topfolder').forEach(x=>x.classList.remove('topfolder'));
   document.querySelectorAll('.folder.beacon').forEach(x=>x.classList.remove('beacon'));
 }
+// ---- quiet background prefetch: the system readies the rooms behind your back ----
+// on a hosted link (github pages) the room videos live on the network — the first
+// visit to a room used to stall while they downloaded. this walks every room,
+// one file at a time, at a gentle pace, so the browser cache is warm before the
+// user ever reaches a room. locally it costs nothing (files load instantly).
+function prefetchRooms(){
+  if(window._prefetchStarted) return; window._prefetchStarted=true;
+  // the FIRST room is decided right now — so it downloads first, audio and all,
+  // and is warm in the cache long before the user's first journey ends.
+  if(!window._nextRoomPick) window._nextRoomPick=chooseNextRoom();
+  const dirs=ROOM_DIRS.slice();
+  const first=dirs.indexOf(window._nextRoomPick);
+  if(first>0){ dirs.splice(first,1); dirs.unshift(window._nextRoomPick); }
+  const files=[];
+  dirs.forEach(d=>{
+    files.push(d+'/background.mp4', d+'/background.jpeg', d+'/sound.mp3');
+    for(let i=1;i<=8;i++) files.push(d+'/radio'+i+'.m4a');
+    files.push(d+'/radiostatic.m4a', d+'/fx1.m4a', d+'/fx2.m4a');
+    for(let i=1;i<=40;i++) files.push(d+'/'+i+'.mp4');
+  });
+  let k=0, misses={};
+  const next=()=>{
+    if(k>=files.length) return;
+    const f=files[k++];
+    const dir=f.slice(0, f.lastIndexOf('/'));
+    if(misses[dir]>=3){ next(); return; }   // three missing numbers in a room -> that room is done
+    fetch(f, {cache:'force-cache'})
+      .then(r=>{ if(!r.ok){ if(/\d+\.mp4$/.test(f)) misses[dir]=(misses[dir]||0)+1; return; }
+                 misses[dir]=0; return r.blob(); })
+      .catch(()=>{})
+      .then(()=>setTimeout(next, 400));   // one file at a time, gently — never choke the machine
+  };
+  next();
+}
 function revealDesktop(){
+  setTimeout(prefetchRooms, 8000);   // start once the desktop has settled
   setTimeout(()=>{
     document.getElementById('installscreen')?.remove();
     sysLog('mounted /me', 'ok');
@@ -7760,9 +7797,7 @@ function revealDesktop(){
   }, 280);
 }
 
-// TEMP: skipping the intro for dev — RESTORE openInstallScreen() before submit.
-// openInstallScreen();
-revealDesktop();
+openInstallScreen();   // the real opening — the desktop reveals only after install
 // TEMP TEST SHORTCUT — press "c" for the cheese room. DELETE before submit.
 addEventListener('keydown', (e)=>{
   if(e.key==='c' && !e.metaKey && !e.ctrlKey && !e.altKey){
