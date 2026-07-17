@@ -3551,6 +3551,7 @@ function plantBatch(){
 // scattered windows of different sizes, each a zoom into a different part of the
 // same image, each playing one of the videos, each drifting on its own timer.
 function openRoomBrokenUp(dir, emotion, title){
+  if(window._prefetchBoost) window._prefetchBoost(dir);   // this room's files jump the download queue NOW
   probeVideos(dir, (count)=>{
     if(count<1){ openRoomArc(dir, emotion, title); return; }   // no videos -> fall back
     // the relic (if any) was already turned into a keepsake by openRoomFullscreen, just before this ran.
@@ -3867,6 +3868,7 @@ function openRoomBrokenUp(dir, emotion, title){
 // 3 heavy panels top-left, 4 scattered smaller ones bottom-right,
 // paragraph floating free in the empty diagonal between them.
 function openRoomEmptyBrokenUp(dir, emotion, title){
+  if(window._prefetchBoost) window._prefetchBoost(dir);   // this room's files jump the download queue NOW
   // ---- EMPTY ROOM: one strip, nothing else. the opposite of every other room.
   // the rooms fill; this one stays ONE window that only stretches taller —
   // "i gave until i was empty" is a single thing pulled until nothing is left.
@@ -4122,6 +4124,7 @@ function openRoomEmptyBrokenUp(dir, emotion, title){
   }
 }
 function openRoomLikeThemBrokenUp(dir, emotion, title){
+  if(window._prefetchBoost) window._prefetchBoost(dir);   // this room's files jump the download queue NOW
   probeVideos(dir, (count)=>{
     if(count<1){ openRoomArc(dir, emotion, title); return; }
     document.querySelectorAll('.brokenBgText').forEach(t=>t.remove());
@@ -4488,6 +4491,7 @@ function openRoomLikeThemBrokenUp(dir, emotion, title){
 
 
 function openRoomLookingBrokenUp(dir, emotion, title){
+  if(window._prefetchBoost) window._prefetchBoost(dir);   // this room's files jump the download queue NOW
   probeVideos(dir, (count)=>{
     if(count<1){ openRoomArc(dir, emotion, title); return; }
     document.querySelectorAll('.brokenBgText').forEach(t=>t.remove());
@@ -4995,6 +4999,7 @@ function openRoomLookingBrokenUp(dir, emotion, title){
 // top row and bottom row first, each row growing from BOTH edges inward; when
 // a row completes, the center-column 1 at its height is born.
 function openRoomFaultBrokenUp(dir, emotion, title){
+  if(window._prefetchBoost) window._prefetchBoost(dir);   // this room's files jump the download queue NOW
   probeVideos(dir, (count)=>{
     if(count<1){ openRoomArc(dir, emotion, title); return; }
     document.querySelectorAll('.brokenBgText').forEach(t=>t.remove());
@@ -5383,6 +5388,7 @@ function openRoomFaultBrokenUp(dir, emotion, title){
 // are up the room goes wild: every second one more video lands — any video,
 // random size (sometimes huge, sometimes tiny), truly random spot.
 function openRoomSaidBrokenUp(dir, emotion, title){
+  if(window._prefetchBoost) window._prefetchBoost(dir);   // this room's files jump the download queue NOW
   probeVideos(dir, (count)=>{
     if(count<1){ openRoomArc(dir, emotion, title); return; }
     document.querySelectorAll('.brokenBgText').forEach(t=>t.remove());
@@ -5817,6 +5823,7 @@ function openRoomSaidBrokenUp(dir, emotion, title){
 // ---- FEAR ROOM composition: same broken-up idea as "how much i gave you",
 // but its own layout — 11 peek-windows, mixed sizes, corner text instead of full-bleed.
 function openFearRoomBrokenUp(dir, emotion, title){
+  if(window._prefetchBoost) window._prefetchBoost(dir);   // this room's files jump the download queue NOW
   probeVideos(dir, (count)=>{
     if(count<1){ openRoomArc(dir, emotion, title); return; }   // no videos -> fall back
     // the relic (if any) was already turned into a keepsake by openRoomFullscreen, just before this ran.
@@ -7788,7 +7795,11 @@ function prefetchRooms(){
                  misses[dir]=0;
                  return r.blob().then(b=>{ window._preURL[f]=URL.createObjectURL(b); }); })
       .catch(()=>{})
-      .then(()=>setTimeout(next, window._prefetchSlow ? 900 : 60));   // slow crawl behind the install video, full speed after
+      .then(()=>{
+        // yield the road: install video OR a live journey song gets the bandwidth
+        const live = window._prefetchSlow || (typeof currentAudio!=='undefined' && currentAudio && !currentAudio.paused && !currentAudio.ended);
+        setTimeout(next, live ? 900 : 60);
+      });
   };
   window._prefetchSlow=true;          // while the install screen plays its video, the prefetch must not steal its bandwidth
   window._prefetchRamp=()=>{ if(!window._prefetchSlow) return; window._prefetchSlow=false; next(); next(); };
