@@ -7771,12 +7771,11 @@ function prefetchRooms(){
       .then(r=>{ if(!r.ok){ if(/\d+\.mp4$/.test(f)) misses[dir]=(misses[dir]||0)+1; return; }
                  misses[dir]=0; return r.blob(); })
       .catch(()=>{})
-      .then(()=>setTimeout(next, 400));   // one file at a time, gently — never choke the machine
+      .then(()=>setTimeout(next, 150));   // a short breath between files — quick but never choking
   };
-  next();
+  next(); next();   // two lanes in parallel — roughly twice as fast, still gentle
 }
 function revealDesktop(){
-  setTimeout(prefetchRooms, 8000);   // start once the desktop has settled
   setTimeout(()=>{
     document.getElementById('installscreen')?.remove();
     sysLog('mounted /me', 'ok');
@@ -7798,6 +7797,7 @@ function revealDesktop(){
 }
 
 openInstallScreen();   // the real opening — the desktop reveals only after install
+setTimeout(prefetchRooms, 1200);   // the rooms start downloading DURING the install screen
 // TEMP TEST SHORTCUT — press "c" for the cheese room. DELETE before submit.
 addEventListener('keydown', (e)=>{
   if(e.key==='c' && !e.metaKey && !e.ctrlKey && !e.altKey){
