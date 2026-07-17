@@ -2221,7 +2221,7 @@ function startJourney(steps, startTitle, fallAt, camKind, endEmo, fearRoom, intr
           s.opts.forEach(o=>{
             const b=document.createElement('div'); b.className='choicebtn';
             b.innerHTML='<span class="cring"></span><span class="clabel">'+fixCaps(o.label)+'</span>';
-            b.onclick=()=>{ if(locked) return; clearPicks(); b.classList.add('picked'); locked=true;
+            b.onclick=()=>{ if(locked) return; uiSelect(); clearPicks(); b.classList.add('picked'); locked=true;
               optsWrap.classList.add('locked');
               const oi=optsWrap.querySelector('.otherinp'); if(oi){ oi.disabled=true; oi.blur(); } accept(o); };
             optsWrap.appendChild(b);
@@ -2236,7 +2236,7 @@ function startJourney(steps, startTitle, fallAt, camKind, endEmo, fearRoom, intr
           oinp.addEventListener('input',()=>{ if(!locked){ clearPicks(); other.classList.add('picked'); } });  // typing also fills it
           oinp.addEventListener('keydown',ev=>{
             if(ev.key==='Enter' && oinp.value.trim()){
-              if(locked) return; locked=true; other.classList.add('picked');
+              if(locked) return; uiSelect(); locked=true; other.classList.add('picked');
               optsWrap.classList.add('locked');
               const match=fuzzyMatch(oinp.value, s.opts);
               if(match){ accept(match); }
@@ -7906,6 +7906,38 @@ addEventListener('keydown', (e)=>{
 });
 //layoutDesktop();
 
+// ---- exhibition idle watch: no hand on the machine -> the system starts itself over ----
+(function(){
+  const IDLE_MS=3*60*1000;   // three quiet minutes before the dialog appears
+  let idleT=null, box=null, cd=null;
+  const closeBox=()=>{ if(cd){ clearInterval(cd); cd=null; } if(box){ box.remove(); box=null; } };
+  const arm=()=>{ if(idleT) clearTimeout(idleT); idleT=setTimeout(showBox, IDLE_MS); };
+  const showBox=()=>{
+    if(box) return;
+    let left=60;
+    box=document.createElement('div');
+    box.style.cssText='position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:5000000;'+
+      'width:420px;max-width:86vw;background:#151515;border:1px solid rgba(255,255,255,.25);border-radius:14px;'+
+      'padding:22px 24px 20px;color:rgba(255,255,255,.9);font-family:var(--font);text-align:center;'+
+      'box-shadow:0 20px 60px rgba(0,0,0,.6);';
+    box.innerHTML='<div data-x style="position:absolute;top:10px;right:14px;cursor:pointer;color:rgba(255,255,255,.55);font-size:15px">&#10005;</div>'+
+      '<div style="font-size:17px;margin-bottom:8px">Are you still there?</div>'+
+      '<div style="font-size:13px;color:rgba(255,255,255,.6);line-height:1.6">No activity detected. the system will start over in <span data-n>60</span> seconds.</div>'+
+      '<div style="display:flex;gap:10px;justify-content:center;margin-top:18px">'+
+      '<button data-stay style="cursor:pointer;background:#fff;color:#000;border:none;border-radius:9px;padding:8px 22px;font-family:var(--font);font-size:13px">I\u2019m still here</button>'+
+      '<button data-go style="cursor:pointer;background:transparent;color:rgba(255,255,255,.8);border:1px solid rgba(255,255,255,.35);border-radius:9px;padding:8px 22px;font-family:var(--font);font-size:13px">Start over</button></div>';
+    document.body.appendChild(box);
+    const n=box.querySelector('[data-n]');
+    cd=setInterval(()=>{ if(--left<=0){ closeBox(); location.reload(); } else n.textContent=left; }, 1000);
+    const cancel=(e)=>{ e.stopPropagation(); closeBox(); arm(); };
+    box.querySelector('[data-stay]').addEventListener('click', cancel);
+    box.querySelector('[data-x]').addEventListener('click', cancel);
+    box.querySelector('[data-go]').addEventListener('click', (e)=>{ e.stopPropagation(); closeBox(); location.reload(); });
+  };
+  ['mousemove','mousedown','keydown','touchstart'].forEach(ev=>
+    addEventListener(ev, ()=>{ if(!box) arm(); }, true));   // while the dialog is up, only its buttons decide
+  arm();
+})();
 // hard lock: if anything ever scrolls the page, snap it back to 0 instantly
 addEventListener('scroll', ()=>{ window.scrollTo(0,0); }, true);
 setInterval(()=>{ if(window.scrollY!==0||window.scrollX!==0) window.scrollTo(0,0); }, 100);
