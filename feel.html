@@ -6541,15 +6541,18 @@ function relicAvoidBrand(keep){
   if(keep.offsetLeft<300 && keep.offsetTop<120) keep.style.top='130px';
 }
 function probeVideos(dir, done){
-  let n=0;
-  const test=(i)=>{
-    if(i>12){ done(n); return; }
-    const v=document.createElement('video');
-    v.onloadeddata=()=>{ n=i; test(i+1); };
-    v.onerror=()=> done(n);
-    v.src=dir+'/'+i+'.mp4';
-  };
-  test(1);
+  if(window._prefetchBoost) window._prefetchBoost(dir);   // this room's files jump the download queue NOW
+  // ALL 12 existence checks fire in PARALLEL, downloading nothing — the old way
+  // loaded every video one after another and stalled hosted rooms for ~10s.
+  const checks=[];
+  for(let i=1;i<=12;i++){
+    checks.push(fetch(dir+'/'+i+'.mp4', {method:'HEAD', cache:'force-cache'})
+      .then(r=>r.ok).catch(()=>false));
+  }
+  Promise.all(checks).then(oks=>{
+    let n=0; for(let i=0;i<12;i++){ if(oks[i]) n=i+1; else break; }
+    done(n);
+  });
 }
 
 function bloomCircle(stage, fx, isLast){
@@ -7762,6 +7765,15 @@ function prefetchRooms(){
     for(let i=1;i<=40;i++) files.push(d+'/'+i+'.mp4');
   });
   let k=0, misses={};
+  // an OPENING room jumps the line: its remaining files move to the front of the
+  // queue, sounds first — so its audio and videos download before anything else.
+  window._prefetchBoost=(dir)=>{
+    const rest=files.slice(k);
+    const mine=rest.filter(f=>f.indexOf(dir+'/')===0);
+    if(!mine.length) return;
+    const other=rest.filter(f=>f.indexOf(dir+'/')!==0);
+    files.length=k; files.push(...mine, ...other);
+  };
   const next=()=>{
     if(k>=files.length) return;
     const f=files[k++];
@@ -7771,9 +7783,9 @@ function prefetchRooms(){
       .then(r=>{ if(!r.ok){ if(/\d+\.mp4$/.test(f)) misses[dir]=(misses[dir]||0)+1; return; }
                  misses[dir]=0; return r.blob(); })
       .catch(()=>{})
-      .then(()=>setTimeout(next, 150));   // a short breath between files — quick but never choking
+      .then(()=>setTimeout(next, 60));   // barely a breath — the network is the only limit
   };
-  next(); next();   // two lanes in parallel — roughly twice as fast, still gentle
+  next(); next(); next();   // three lanes in parallel
 }
 function revealDesktop(){
   setTimeout(()=>{
