@@ -7908,7 +7908,7 @@ addEventListener('keydown', (e)=>{
 
 // ---- exhibition idle watch: no hand on the machine -> the system starts itself over ----
 (function(){
-  const IDLE_MS=3*60*1000;   // three quiet minutes before the dialog appears
+  const IDLE_MS=5*60*1000;   // five quiet minutes before the dialog appears (the usual kiosk default)
   let idleT=null, box=null, cd=null;
   const closeBox=()=>{ if(cd){ clearInterval(cd); cd=null; } if(box){ box.remove(); box=null; } };
   const arm=()=>{ if(idleT) clearTimeout(idleT); idleT=setTimeout(showBox, IDLE_MS); };
@@ -7921,12 +7921,12 @@ addEventListener('keydown', (e)=>{
     box.style.cssText='position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:5000000;'+
       'width:440px;max-width:86vw;animation:none;';
     box.innerHTML='<div class="bar"><div class="dots"><span class="dot" data-x>'+XSVG+'</span></div></div>'+
-      '<div class="body" style="text-align:center;padding:22px 26px 24px">'+
-      '<div style="font-size:17px;color:rgba(255,255,255,.9);margin-bottom:10px">Are you still there?</div>'+
+      '<div class="body" style="text-align:center;padding:18px 26px 26px">'+
+      '<div style="font-size:20px;color:rgba(255,255,255,.92);margin-bottom:10px">Are you still there?</div>'+
       '<div style="font-size:13px;color:rgba(255,255,255,.6);line-height:1.6">No activity detected. the system will<br>start over in <span data-n>60</span> seconds.</div>'+
-      '<div class="ynrow ynrow-dark">'+
-      '<button class="ynbtn" data-stay style="width:auto;min-width:115px;white-space:nowrap">I\u2019m still here</button>'+
-      '<button class="ynbtn" data-go style="width:auto;min-width:115px;white-space:nowrap">Start over</button></div></div>';
+      '<div class="ynrow ynrow-dark" style="margin-top:30px">'+
+      '<button class="ynbtn picked" data-stay style="width:160px;white-space:nowrap">I\u2019m still here</button>'+
+      '<button class="ynbtn" data-go style="width:160px;white-space:nowrap">Start over</button></div></div>';
     document.body.appendChild(box);
     const n=box.querySelector('[data-n]');
     cd=setInterval(()=>{ if(--left<=0){ closeBox(); location.reload(); } else n.textContent=left; }, 1000);
@@ -7937,6 +7937,8 @@ addEventListener('keydown', (e)=>{
   };
   ['mousemove','mousedown','keydown','touchstart'].forEach(ev=>
     addEventListener(ev, ()=>{ if(!box) arm(); }, true));   // while the dialog is up, only its buttons decide
+  // TEMP TEST SHORTCUT — press "i" to open the idle dialog now. DELETE before submit.
+  addEventListener('keydown',(e)=>{ if(e.key==='i' && !e.metaKey && !e.ctrlKey && !e.altKey) showBox(); });
   arm();
 })();
 // hard lock: if anything ever scrolls the page, snap it back to 0 instantly
