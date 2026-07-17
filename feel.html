@@ -3550,6 +3550,28 @@ function plantBatch(){
 // ---- BROKEN-UP ROOM: one image, many peek-windows (lecturer proof-of-concept) ----
 // scattered windows of different sizes, each a zoom into a different part of the
 // same image, each playing one of the videos, each drifting on its own timer.
+// swap a VISIBLE video's source with no black flash: the current frame is frozen
+// on a canvas layer above it, the new file loads underneath, and the frozen layer
+// is lifted only when the new video is actually painting frames.
+function swapSrcSmooth(v, url){
+  try{
+    if(v.videoWidth && v.parentNode){
+      const c=document.createElement('canvas');
+      c.width=v.videoWidth; c.height=v.videoHeight;
+      c.getContext('2d').drawImage(v,0,0);
+      const r=v.getBoundingClientRect(), pr=v.parentNode.getBoundingClientRect();
+      c.style.cssText='position:absolute;left:'+(r.left-pr.left)+'px;top:'+(r.top-pr.top)+'px;'+
+        'width:'+r.width+'px;height:'+r.height+'px;object-fit:cover;pointer-events:none;z-index:3;';
+      v.parentNode.appendChild(c);
+      const lift=()=>{ if(c.parentNode) c.remove(); };
+      v.addEventListener('playing', lift, {once:true});
+      setTimeout(lift, 4000);   // safety — never leave a frozen frame stuck
+    }
+  }catch(_){}
+  v.src=url;
+  const go=()=>v.play().catch(()=>{});
+  v.addEventListener('loadeddata', go, {once:true}); go();
+}
 function openRoomBrokenUp(dir, emotion, title){
   if(window._prefetchBoost) window._prefetchBoost(dir);   // this room's files jump the download queue NOW
   probeVideos(dir, (count)=>{
@@ -4031,9 +4053,7 @@ function openRoomEmptyBrokenUp(dir, emotion, title){
     const _playCurrent=()=>{
       playN=0;
       const [vn]=CHAIN[idx];
-      v.src=_vsrc(dir+'/'+vn+'.mp4');
-      const go=()=>v.play().catch(()=>{});
-      v.addEventListener('loadeddata', go, {once:true}); go();
+      swapSrcSmooth(v, _vsrc(dir+'/'+vn+'.mp4'));   // no black flash between clips
     };
 
     const _loopHere=()=>{ v.loop=true; try{ v.play().catch(()=>{}); }catch(_){ } };
@@ -4112,10 +4132,9 @@ function openRoomEmptyBrokenUp(dir, emotion, title){
         keep.style.top =Math.round(130+Math.random()*Math.max(1,(innerHeight-th-190)))+'px';
         keep.style.pointerEvents='';   // 18 was dead to the mouse; the keepsake lives again
         const kv=keep.querySelector('video');
-        if(kv){ kv.loop=true; kv.src=_vsrc(dir+'/7.mp4');
+        if(kv){ kv.loop=true;
           kv.style.objectPosition='44% 50%';   // her body sits center (calibrated)
-          const kgo=()=>kv.play().catch(()=>{});
-          kv.addEventListener('loadeddata', kgo, {once:true}); kgo(); }
+          swapSrcSmooth(kv, _vsrc(dir+'/7.mp4')); }
       }
       if(z<310000) z=310000;
       const sl=document.getElementById('syslog'); if(sl) sl.style.zIndex='1900000';
