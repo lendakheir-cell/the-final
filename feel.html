@@ -7783,11 +7783,14 @@ function prefetchRooms(){
       .then(r=>{ if(!r.ok){ if(/\d+\.mp4$/.test(f)) misses[dir]=(misses[dir]||0)+1; return; }
                  misses[dir]=0; return r.blob(); })
       .catch(()=>{})
-      .then(()=>setTimeout(next, 60));   // barely a breath — the network is the only limit
+      .then(()=>setTimeout(next, window._prefetchSlow ? 900 : 60));   // slow crawl behind the install video, full speed after
   };
-  next(); next(); next();   // three lanes in parallel
+  window._prefetchSlow=true;          // while the install screen plays its video, the prefetch must not steal its bandwidth
+  window._prefetchRamp=()=>{ if(!window._prefetchSlow) return; window._prefetchSlow=false; next(); next(); };
+  next();                              // one quiet lane during install; ramp adds two more
 }
 function revealDesktop(){
+  if(window._prefetchRamp) window._prefetchRamp();   // the install video is done — the prefetch may take the whole road
   setTimeout(()=>{
     document.getElementById('installscreen')?.remove();
     sysLog('mounted /me', 'ok');
