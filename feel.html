@@ -7915,24 +7915,25 @@ addEventListener('keydown', (e)=>{
   const showBox=()=>{
     if(box) return;
     let left=60;
+    const XSVG='<svg viewBox="0 0 12 12"><line x1="3.5" y1="3.5" x2="8.5" y2="8.5"/><line x1="8.5" y1="3.5" x2="3.5" y2="8.5"/></svg>';
     box=document.createElement('div');
+    box.className='win';
     box.style.cssText='position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:5000000;'+
-      'width:420px;max-width:86vw;background:#151515;border:1px solid rgba(255,255,255,.25);border-radius:14px;'+
-      'padding:22px 24px 20px;color:rgba(255,255,255,.9);font-family:var(--font);text-align:center;'+
-      'box-shadow:0 20px 60px rgba(0,0,0,.6);';
-    box.innerHTML='<div data-x style="position:absolute;top:10px;right:14px;cursor:pointer;color:rgba(255,255,255,.55);font-size:15px">&#10005;</div>'+
-      '<div style="font-size:17px;margin-bottom:8px">Are you still there?</div>'+
-      '<div style="font-size:13px;color:rgba(255,255,255,.6);line-height:1.6">No activity detected. the system will start over in <span data-n>60</span> seconds.</div>'+
-      '<div style="display:flex;gap:10px;justify-content:center;margin-top:18px">'+
-      '<button data-stay style="cursor:pointer;background:#fff;color:#000;border:none;border-radius:9px;padding:8px 22px;font-family:var(--font);font-size:13px">I\u2019m still here</button>'+
-      '<button data-go style="cursor:pointer;background:transparent;color:rgba(255,255,255,.8);border:1px solid rgba(255,255,255,.35);border-radius:9px;padding:8px 22px;font-family:var(--font);font-size:13px">Start over</button></div>';
+      'width:440px;max-width:86vw;animation:none;';
+    box.innerHTML='<div class="bar"><div class="dots"><span class="dot" data-x>'+XSVG+'</span></div></div>'+
+      '<div class="body" style="text-align:center;padding:22px 26px 24px">'+
+      '<div style="font-size:17px;color:rgba(255,255,255,.9);margin-bottom:10px">Are you still there?</div>'+
+      '<div style="font-size:13px;color:rgba(255,255,255,.6);line-height:1.6">No activity detected. the system will<br>start over in <span data-n>60</span> seconds.</div>'+
+      '<div class="ynrow ynrow-dark">'+
+      '<button class="ynbtn" data-stay style="width:auto;min-width:115px;white-space:nowrap">I\u2019m still here</button>'+
+      '<button class="ynbtn" data-go style="width:auto;min-width:115px;white-space:nowrap">Start over</button></div></div>';
     document.body.appendChild(box);
     const n=box.querySelector('[data-n]');
     cd=setInterval(()=>{ if(--left<=0){ closeBox(); location.reload(); } else n.textContent=left; }, 1000);
-    const cancel=(e)=>{ e.stopPropagation(); closeBox(); arm(); };
+    const cancel=(e)=>{ e.stopPropagation(); uiSelect(); closeBox(); arm(); };
     box.querySelector('[data-stay]').addEventListener('click', cancel);
     box.querySelector('[data-x]').addEventListener('click', cancel);
-    box.querySelector('[data-go]').addEventListener('click', (e)=>{ e.stopPropagation(); closeBox(); location.reload(); });
+    box.querySelector('[data-go]').addEventListener('click', (e)=>{ e.stopPropagation(); uiSelect(); closeBox(); location.reload(); });
   };
   ['mousemove','mousedown','keydown','touchstart'].forEach(ev=>
     addEventListener(ev, ()=>{ if(!box) arm(); }, true));   // while the dialog is up, only its buttons decide
