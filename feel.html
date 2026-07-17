@@ -3585,7 +3585,7 @@ function openRoomBrokenUp(dir, emotion, title){
       v.className='brokenBgText';
       v.muted=true; v.playsInline=true; v.autoplay=true; v.loop=true; v.controls=false;
       v.setAttribute('muted','');
-      v.src=dir+'/'+vn+'.mp4';
+      v.src=_vsrc(dir+'/'+vn+'.mp4');
       v.style.cssText='position:fixed;left:-10000px;top:0;width:10px;height:10px;pointer-events:none;';
       document.body.appendChild(v);
       const go=()=>v.play().catch(()=>{});
@@ -3641,7 +3641,7 @@ function openRoomBrokenUp(dir, emotion, title){
         const v=document.createElement('video');
         v.muted=true; v.playsInline=true; v.autoplay=true; v.loop=true; v.controls=false;
         v.setAttribute('muted','');
-        v.src=dir+'/'+vn+'.mp4';
+        v.src=_vsrc(dir+'/'+vn+'.mp4');
         v.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 50%;border-radius:8px;pointer-events:none;';
         stage.appendChild(v);
         const go=()=>v.play().catch(()=>{});
@@ -3880,7 +3880,7 @@ function openRoomEmptyBrokenUp(dir, emotion, title){
     const probe=document.createElement('video');
     probe.onloadeddata=()=>{ build(); };
     probe.onerror=()=>{ openRoomArc(dir, emotion, title); };
-    probe.src=dir+'/7.mp4';
+    probe.src=_vsrc(dir+'/7.mp4');
   })();
 
   function build(){
@@ -3905,7 +3905,7 @@ function openRoomEmptyBrokenUp(dir, emotion, title){
     let _growFails=0;
     const _growPool=[]; let _growI=0;
     for(let k=0;k<3;k++){
-      const a=new Audio(dir+'/grow.m4a');
+      const a=new Audio(_vsrc(dir+'/grow.m4a'));
       a.addEventListener('error',()=>{ if(++_growFails===1) console.warn('grow sound missing/broken: '+dir+'/grow.m4a'); });
       _allAudio.push(a); _growPool.push(a);
     }
@@ -3921,7 +3921,7 @@ function openRoomEmptyBrokenUp(dir, emotion, title){
       m.className='brokenBgText';
       m.muted=true; m.playsInline=true; m.autoplay=true; m.loop=true; m.controls=false;
       m.setAttribute('muted','');
-      m.src=dir+'/12.mp4';
+      m.src=_vsrc(dir+'/12.mp4');
       m.style.cssText='position:fixed;left:-10000px;top:0;width:10px;height:10px;pointer-events:none;';
       document.body.appendChild(m);
       const mg=()=>m.play().catch(()=>{});
@@ -4029,7 +4029,7 @@ function openRoomEmptyBrokenUp(dir, emotion, title){
     const _playCurrent=()=>{
       playN=0;
       const [vn]=CHAIN[idx];
-      v.src=dir+'/'+vn+'.mp4';
+      v.src=_vsrc(dir+'/'+vn+'.mp4');
       const go=()=>v.play().catch(()=>{});
       v.addEventListener('loadeddata', go, {once:true}); go();
     };
@@ -4073,7 +4073,7 @@ function openRoomEmptyBrokenUp(dir, emotion, title){
     // one strip and almost nothing; a player would compete with it.
     let _emptyAu=null;
     (function(){
-      const au=new Audio(dir+'/sound.mp3');
+      const au=new Audio(_vsrc(dir+'/sound.mp3'));
       au.loop=true; _allAudio.push(au); _emptyAu=au;
       const tryPlay=()=>au.play().catch(()=>{});
       setTimeout(tryPlay, 600);
@@ -4110,7 +4110,7 @@ function openRoomEmptyBrokenUp(dir, emotion, title){
         keep.style.top =Math.round(130+Math.random()*Math.max(1,(innerHeight-th-190)))+'px';
         keep.style.pointerEvents='';   // 18 was dead to the mouse; the keepsake lives again
         const kv=keep.querySelector('video');
-        if(kv){ kv.loop=true; kv.src=dir+'/7.mp4';
+        if(kv){ kv.loop=true; kv.src=_vsrc(dir+'/7.mp4');
           kv.style.objectPosition='44% 50%';   // her body sits center (calibrated)
           const kgo=()=>kv.play().catch(()=>{});
           kv.addEventListener('loadeddata', kgo, {once:true}); kgo(); }
@@ -4253,7 +4253,7 @@ function openRoomLikeThemBrokenUp(dir, emotion, title){
       v.className='brokenBgText';
       v.muted=true; v.playsInline=true; v.autoplay=true; v.loop=true; v.controls=false;
       v.setAttribute('muted','');
-      v.src=dir+'/'+nv+'.mp4';
+      v.src=_vsrc(dir+'/'+nv+'.mp4');
       v.style.cssText='position:fixed;left:-10000px;top:0;width:10px;height:10px;pointer-events:none;';
       document.body.appendChild(v);
       const go=()=>v.play().catch(()=>{});
@@ -4311,7 +4311,7 @@ function openRoomLikeThemBrokenUp(dir, emotion, title){
     (function(){
       const pool=[]; let pi=0, fails=0;
       for(let k=0;k<3;k++){
-        const a=new Audio(dir+'/fx.m4a');
+        const a=new Audio(_vsrc(dir+'/fx.m4a'));
         a.addEventListener('error',()=>{ if(++fails===1) console.warn('fx missing/broken: '+dir+'/fx.m4a'); });
         _allAudio.push(a); pool.push(a);
       }
@@ -4323,7 +4323,7 @@ function openRoomLikeThemBrokenUp(dir, emotion, title){
 
     let songAudio=null;
     const mkSongAt=(px,py,at)=>{
-      const au=new Audio(dir+'/sound.m4a');
+      const au=new Audio(_vsrc(dir+'/sound.m4a'));
       au.loop=true; _allAudio.push(au); songAudio=au;
       // the song stays LOW while the herd is still arriving — it rises back to
       // full the moment the last copy has landed.
@@ -4610,7 +4610,7 @@ function openRoomLookingBrokenUp(dir, emotion, title){
       v.className='brokenBgText';
       v.muted=true; v.playsInline=true; v.autoplay=true; v.loop=true; v.controls=false;
       v.setAttribute('muted','');
-      v.src=dir+'/'+nv+'.mp4';
+      v.src=_vsrc(dir+'/'+nv+'.mp4');
       v.style.cssText='position:fixed;left:-10000px;top:0;width:10px;height:10px;pointer-events:none;';
       document.body.appendChild(v);
       const go=()=>v.play().catch(()=>{});
@@ -4756,7 +4756,7 @@ function openRoomLookingBrokenUp(dir, emotion, title){
     // missing/broken files stay silently quiet after one console warning.
     let songAudio=null;
     (function(){
-      const au=new Audio(dir+'/sound.m4a');
+      const au=new Audio(_vsrc(dir+'/sound.m4a'));
       au.loop=true; au.volume=0.4; _allAudio.push(au); _roomSongs.push(au); songAudio=au;
       const tryPlay=()=>au.play().catch(()=>{});
       tryPlay();
@@ -4764,7 +4764,7 @@ function openRoomLookingBrokenUp(dir, emotion, title){
     })();
     let _wheel=null;
     (function(){
-      const a=new Audio(dir+'/fx5.m4a');
+      const a=new Audio(_vsrc(dir+'/fx5.m4a'));
       a.loop=true; a.volume=0.6;
       a.addEventListener('error',()=>{ console.warn('fx missing/broken: '+dir+'/fx5.m4a'); _wheel=null; });
       _allAudio.push(a); _wheel=a;
@@ -5069,7 +5069,7 @@ function openRoomFaultBrokenUp(dir, emotion, title){
       v.className='brokenBgText';
       v.muted=true; v.playsInline=true; v.autoplay=true; v.loop=true; v.controls=false;
       v.setAttribute('muted','');
-      v.src=dir+'/'+nv+'.mp4';
+      v.src=_vsrc(dir+'/'+nv+'.mp4');
       v.style.cssText='position:fixed;left:-10000px;top:0;width:10px;height:10px;pointer-events:none;';
       document.body.appendChild(v);
       const go=()=>v.play().catch(()=>{});
@@ -5232,7 +5232,7 @@ function openRoomFaultBrokenUp(dir, emotion, title){
 
     // the room's sound plays in the BACKGROUND — no player window.
     (function(){
-      const au=new Audio(dir+'/sound.m4a');
+      const au=new Audio(_vsrc(dir+'/sound.m4a'));
       au.loop=true; _allAudio.push(au); _roomSongs.push(au);
       const tryPlay=()=>au.play().catch(()=>{});
       setTimeout(tryPlay, 600);
@@ -5247,7 +5247,7 @@ function openRoomFaultBrokenUp(dir, emotion, title){
     // missing/broken files stay silently quiet after one console warning.
     let _fx1=null;
     (function(){
-      const a=new Audio(dir+'/fx1.m4a');
+      const a=new Audio(_vsrc(dir+'/fx1.m4a'));
       a.loop=true; a.volume=0.7;
       a.addEventListener('error',()=>{ console.warn('fx missing/broken: '+dir+'/fx1.m4a'); _fx1=null; });
       _allAudio.push(a); _fx1=a;
@@ -5266,7 +5266,7 @@ function openRoomFaultBrokenUp(dir, emotion, title){
     };
     const _clkPool=[]; let _clkI=0, _clkFails=0, _clkLast=0;
     for(let k=0;k<4;k++){
-      const a=new Audio(dir+'/fx2.m4a');
+      const a=new Audio(_vsrc(dir+'/fx2.m4a'));
       a.addEventListener('error',()=>{ if(++_clkFails===1) console.warn('fx missing/broken: '+dir+'/fx2.m4a'); });
       _allAudio.push(a); _clkPool.push(a);
     }
@@ -5451,7 +5451,7 @@ function openRoomSaidBrokenUp(dir, emotion, title){
       v.className='brokenBgText';
       v.muted=true; v.playsInline=true; v.autoplay=true; v.loop=true; v.controls=false;
       v.setAttribute('muted','');
-      v.src=dir+'/'+nv+'.mp4';
+      v.src=_vsrc(dir+'/'+nv+'.mp4');
       v.style.cssText='position:fixed;left:-10000px;top:0;width:10px;height:10px;pointer-events:none;';
       document.body.appendChild(v);
       const go=()=>v.play().catch(()=>{});
@@ -5669,7 +5669,7 @@ function openRoomSaidBrokenUp(dir, emotion, title){
     // (in THIS room it's the broadcast test tone, saved as sound.m4a.)
     let songAudio=null;
     const mkSongAt=(px,py,at)=>{   // keeps its call sites; px/py are ignored now
-      const au=new Audio(dir+'/sound.m4a');
+      const au=new Audio(_vsrc(dir+'/sound.m4a'));
       au.loop=true; _allAudio.push(au); songAudio=au; _roomSongs.push(au);
       const tryPlay=()=>au.play().catch(()=>{});
       tryPlay();                                    // starts WITH the broadcast
@@ -6186,7 +6186,7 @@ function openFearRoomBrokenUp(dir, emotion, title){
       v.className='brokenBgText';
       v.muted=true; v.playsInline=true; v.autoplay=true; v.loop=true; v.controls=false;
       v.setAttribute('muted','');
-      v.src=dir+'/'+vn+'.mp4';
+      v.src=_vsrc(dir+'/'+vn+'.mp4');
       v.style.cssText='position:fixed;left:-10000px;top:0;width:10px;height:10px;pointer-events:none;';
       document.body.appendChild(v);
       const go=()=>v.play().catch(()=>{});
@@ -6268,7 +6268,7 @@ function openFearRoomBrokenUp(dir, emotion, title){
         const v=document.createElement('video');
         v.muted=true; v.playsInline=true; v.autoplay=true; v.loop=true; v.controls=false;
         v.setAttribute('muted','');
-        v.src=dir+'/'+vi+'.mp4';
+        v.src=_vsrc(dir+'/'+vi+'.mp4');
         const zm = p.zoom || 100;
         v.style.cssText='position:absolute;left:0;top:0;'+
           'object-fit:fill;'+
@@ -6501,7 +6501,7 @@ function openRoomArc(dir, emotion, title){
       const tryPlay=()=>{ v.play().catch(()=>{}); };
       v.addEventListener('loadeddata', tryPlay);
       v.addEventListener('canplay', tryPlay);
-      v.src=dir+'/'+cur+'.mp4';
+      v.src=_vsrc(dir+'/'+cur+'.mp4');
       v.style.opacity='0'; v.style.transition='opacity .8s ease';
       stage.appendChild(v);
       styleRoomMedia(win, v);
@@ -7749,6 +7749,9 @@ function closeRoomForFolder(){
 // visit to a room used to stall while they downloaded. this walks every room,
 // one file at a time, at a gentle pace, so the browser cache is warm before the
 // user ever reaches a room. locally it costs nothing (files load instantly).
+window._preURL={};   // url -> blob url of an already-downloaded room file
+// every room file plays from memory if the prefetch already fetched it — zero network
+function _vsrc(p){ return (window._preURL && window._preURL[p]) || p; }
 function prefetchRooms(){
   if(window._prefetchStarted) return; window._prefetchStarted=true;
   // the FIRST room is decided right now — so it downloads first, audio and all,
@@ -7759,9 +7762,10 @@ function prefetchRooms(){
   if(first>0){ dirs.splice(first,1); dirs.unshift(window._nextRoomPick); }
   const files=[];
   dirs.forEach(d=>{
-    files.push(d+'/background.mp4', d+'/background.jpeg', d+'/sound.mp3');
+    files.push(d+'/background.mp4', d+'/background.jpeg', d+'/sound.mp3', d+'/sound.m4a', d+'/fx.m4a');
     for(let i=1;i<=8;i++) files.push(d+'/radio'+i+'.m4a');
-    files.push(d+'/radiostatic.m4a', d+'/fx1.m4a', d+'/fx2.m4a');
+    for(let i=1;i<=6;i++) files.push(d+'/fx'+i+'.m4a');
+    files.push(d+'/radiostatic.m4a');
     for(let i=1;i<=40;i++) files.push(d+'/'+i+'.mp4');
   });
   let k=0, misses={};
@@ -7781,7 +7785,8 @@ function prefetchRooms(){
     if(misses[dir]>=3){ next(); return; }   // three missing numbers in a room -> that room is done
     fetch(f, {cache:'force-cache'})
       .then(r=>{ if(!r.ok){ if(/\d+\.mp4$/.test(f)) misses[dir]=(misses[dir]||0)+1; return; }
-                 misses[dir]=0; return r.blob(); })
+                 misses[dir]=0;
+                 return r.blob().then(b=>{ window._preURL[f]=URL.createObjectURL(b); }); })
       .catch(()=>{})
       .then(()=>setTimeout(next, window._prefetchSlow ? 900 : 60));   // slow crawl behind the install video, full speed after
   };
