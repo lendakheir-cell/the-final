@@ -331,6 +331,7 @@ body.shaking{ animation:none; }
   .ynbtn.picked{ background:linear-gradient(160deg,rgba(90,90,90,.95),rgba(50,50,50,.98));
     color:#fff; border-color:transparent; }
   .ynbtn:active{ transform:scale(.96); }
+  .saverbtn:hover{ background:linear-gradient(160deg,rgba(120,120,120,.95),rgba(75,75,75,.98)); }
   .trap .ans{ color:rgba(255,255,255,.6); }
 
   .eye .bar{ display:none; }
@@ -5252,8 +5253,14 @@ function openRoomFaultBrokenUp(dir, emotion, title){
     _grid(OPEN3, 0, x1+24-w3o, 107, 276);              // left: flush left -> tucked under 1
     _grid(OPEN5, x1+w1-24, SW-w5o, 182, 275);          // right: tucked under 1 -> flush right
     _bigify(big1m, {x:x1, y:0, w:w1, h:SHh});          // full height, true ratio, last = on top
-    setTimeout(()=>{ OPEN3.forEach(mm=>_show(mm.win)); OPEN5.forEach(mm=>_show(mm.win)); }, 300);
-    setTimeout(()=>{ _show(_big1); }, 600);
+    // the center 1 arrives ALONE; 2s later the RIGHT side lands window by
+    // window — the whole crew inside one second; 2s after that the LEFT side
+    // does the same. one-by-one, but fast.
+    setTimeout(()=>{ _show(_big1); }, 300);
+    const _popIn=(list)=>{ const iv=Math.max(30, Math.floor(1000/Math.max(1,list.length)));
+      list.forEach((mm,i)=>{ const t=setTimeout(()=>_show(mm.win), i*iv); _rowTimers.push(t); }); };
+    setTimeout(()=>{ _popIn(OPEN5); }, 2000);
+    setTimeout(()=>{ _popIn(OPEN3); }, 4000);
 
     // the room's sound plays in the BACKGROUND — no player window.
     (function(){
@@ -5319,11 +5326,10 @@ function openRoomFaultBrokenUp(dir, emotion, title){
     };
     setTimeout(()=>{
       _clk();                                      // the click — then everything moves
-      _fx1To(0.18);                                // the continuous sound steps back for the clicks
       OPEN3.forEach(mm=>_shrinkTo(mm, [mm.svg[0], mm.svg[1], 107, 276]));
       OPEN5.forEach(mm=>_shrinkTo(mm, [mm.svg[0], mm.svg[1], 182, 275]));
       _shrink1to2();
-    }, 5000);
+    }, 7000);
 
     // ---- the rows: top and bottom first, then inward, each row growing from
     // BOTH edges toward the middle; a finished row births its center 1.
@@ -5352,9 +5358,9 @@ function openRoomFaultBrokenUp(dir, emotion, title){
     // then the rest of the rows chain in — quick.
     setTimeout(()=>{
       _revealRow(rows.C, ()=>{
-        _runPair(['A','F'], ()=> _runPair(['B','E'], ()=> _runPair(['D'], ()=>_fx1To(0.7))));
+        _runPair(['A','F'], ()=> _runPair(['B','E'], ()=> _runPair(['D'], null)));
       }, 90);
-    }, 6400);
+    }, 8400);
 
     if(title){
       _logLine('==============================', 'dim');
@@ -7593,6 +7599,7 @@ function openInstallScreen(){
       // plays once; stays frozen on the last frame
       const w=document.getElementById('installwin');
       if(w){ w.style.opacity='1'; w.style.pointerEvents='auto'; }
+      if(window._armScreensaver) window._armScreensaver();   // the idle clock starts HERE — the film is over, the hand is expected
     }, {once:true});
   }
 
@@ -7819,6 +7826,7 @@ function prefetchRooms(){
   const first=dirs.indexOf(window._nextRoomPick);
   if(first>0){ dirs.splice(first,1); dirs.unshift(window._nextRoomPick); }
   const files=[];
+  files.push('rooms/Screen.mp4');   // the screensaver film — warm before anyone goes idle
   dirs.forEach(d=>{
     files.push(d+'/background.mp4', d+'/background.jpeg', d+'/sound.mp3', d+'/sound.m4a', d+'/fx.m4a');
     for(let i=1;i<=8;i++) files.push(d+'/radio'+i+'.m4a');
@@ -7857,6 +7865,7 @@ function prefetchRooms(){
   next();                              // one quiet lane during install; ramp adds two more
 }
 function revealDesktop(){
+  if(window._armScreensaver) window._armScreensaver();   // the idle clock starts only HERE — the intro is read hands-off
   if(window._prefetchRamp) window._prefetchRamp();   // the install video is done — the prefetch may take the whole road
   setTimeout(()=>{
     document.getElementById('installscreen')?.remove();
@@ -7938,43 +7947,92 @@ addEventListener('keydown', (e)=>{
 });
 //layoutDesktop();
 
-// ---- exhibition idle watch: no hand on the machine -> the system starts itself over ----
+// ---- exhibition screensaver: 60 quiet seconds -> the film takes the screen.
+// image and one button, nothing else. the dot-X (system language, not text)
+// returns the watcher to exactly where they were; the start button reloads.
 (function(){
-  const IDLE_MS=5*60*1000;   // five quiet minutes before the dialog appears (the usual kiosk default)
-  let idleT=null, box=null, cd=null;
-  const closeBox=()=>{ if(cd){ clearInterval(cd); cd=null; } if(box){ box.remove(); box=null; } };
-  const arm=()=>{ if(idleT) clearTimeout(idleT); idleT=setTimeout(showBox, IDLE_MS); };
-  const showBox=()=>{
-    if(box) return;
-    let left=60;
-    const XSVG='<svg viewBox="0 0 12 12"><line x1="3.5" y1="3.5" x2="8.5" y2="8.5"/><line x1="8.5" y1="3.5" x2="3.5" y2="8.5"/></svg>';
-    box=document.createElement('div');
-    box.className='win';
-    box.style.cssText='position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:5000000;'+
-      'width:330px;max-width:74vw;animation:none;';
-    box.innerHTML='<div class="bar"><div class="dots"><span class="dot" data-x>'+XSVG+'</span></div></div>'+
-      '<div class="body" style="text-align:left;padding:3px 30px 30px">'+
-      '<div style="font-size:18px;color:rgba(255,255,255,.92);margin-bottom:10px">Are you still there?</div>'+
-      '<div style="font-size:13px;color:rgba(255,255,255,.6);line-height:1.6">No activity detected. the system will<br>start over in <span data-n>60</span> seconds.</div>'+
-      '<div class="ynrow ynrow-dark" style="margin-top:22px">'+
-      '<button class="ynbtn" data-go style="width:115px;white-space:nowrap">Restart</button>'+
-      '<button class="ynbtn picked" data-stay style="width:115px;white-space:nowrap">Cancel</button></div></div>';
-    document.body.appendChild(box);
-    const n=box.querySelector('[data-n]');
-    cd=setInterval(()=>{ if(--left<=0){ closeBox(); location.reload(); } else n.textContent=left; }, 1000);
-    const cancel=(e)=>{ e.stopPropagation(); uiSelect(); closeBox(); arm(); };
-    box.querySelector('[data-stay]').addEventListener('click', cancel);
-    box.querySelector('[data-x]').addEventListener('click', cancel);
-    box.querySelector('[data-go]').addEventListener('click', (e)=>{ e.stopPropagation(); uiSelect(); closeBox(); location.reload(); });
+  const IDLE_MS=60*1000;
+  let idleT=null, saver=null;
+  const closeSaver=()=>{ if(!saver) return;
+    const v=saver.querySelector('video');
+    if(v){ try{ v.pause(); v.removeAttribute('src'); v.load(); }catch(_){} }
+    saver.remove(); saver=null; };
+  const arm=()=>{ if(idleT) clearTimeout(idleT); idleT=setTimeout(showSaver, IDLE_MS); };
+  const showSaver=()=>{
+    if(saver) return;
+    saver=document.createElement('div');
+    saver.style.cssText='position:fixed;inset:0;z-index:5000000;background:#000;opacity:0;transition:opacity 1.2s ease;';
+    saver.innerHTML=
+      '<video autoplay loop playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;"></video>'+
+      '<div class="win journal" data-box style="position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);animation:none;width:auto;">'+
+        '<div class="body" style="padding:40px;display:flex;justify-content:center;align-items:center;max-height:none">'+
+          '<div class="ynrow" style="margin-top:0">'+
+          '<button class="ynbtn picked saverbtn" data-go>start</button></div></div>';
+    document.body.appendChild(saver);
+    // the machine under the film goes QUIET: every sound and every video
+    // pauses. no mixing, no wasted decoding. the only way out is start ->
+    // reload, so nothing ever needs waking back up.
+    try{ _allAudio.forEach(a=>{ try{ a.pause(); }catch(_){} }); }catch(_){}
+    try{ if(typeof currentAudio!=='undefined' && currentAudio) currentAudio.pause(); }catch(_){}
+    document.querySelectorAll('video').forEach(vv=>{ if(!saver.contains(vv)){ try{ vv.pause(); }catch(_){} } });
+    // the CAMERA goes fully dark — the hardware light turns off, zero capture.
+    try{ if(typeof video!=='undefined' && video && video.srcObject){
+      video.srcObject.getTracks().forEach(t=>t.stop()); video.srcObject=null; camOK=false; } }catch(_){}
+    // every ticking timer in the machine stops — rooms, eyes, floods, all of it.
+    try{ const top=setTimeout(()=>{},0); for(let ti=1; ti<=top; ti++){ clearTimeout(ti); clearInterval(ti); } }catch(_){}
+    const v=saver.querySelector('video');
+    v.src=_vsrc('rooms/Screen.mp4');
+    v.play().catch(()=>{ v.muted=true; v.play().catch(()=>{}); });   // sound if allowed; never a black screen
+    requestAnimationFrame(()=>{ saver.style.opacity='1'; });
+    saver.querySelector('[data-go]').addEventListener('click',(e)=>{ e.stopPropagation(); uiSelect(); location.reload(); });
+    saver.addEventListener('mousedown',(e)=>e.stopPropagation(), true);   // the desktop under it never hears the mouse
   };
+  let armed=false;
+  window._armScreensaver=()=>{ if(armed) return; armed=true; arm(); };
   ['mousemove','mousedown','keydown','touchstart'].forEach(ev=>
-    addEventListener(ev, ()=>{ if(!box) arm(); }, true));   // while the dialog is up, only its buttons decide
+    addEventListener(ev, ()=>{ if(armed && !saver) arm(); }, true));   // while the saver is up, only its X and button decide
   // TEMP TEST SHORTCUT — press "e" to fire the error meltdown now. DELETE before submit.
   addEventListener('keydown',(e)=>{ if(e.key==='e' && !e.metaKey && !e.ctrlKey && !e.altKey) breakSystem(null, Math.random()<0.5, 'I never sent it'); });
-  // TEMP TEST SHORTCUT — press "i" to open the idle dialog now. DELETE before submit.
-  addEventListener('keydown',(e)=>{ if(e.key==='i' && !e.metaKey && !e.ctrlKey && !e.altKey) showBox(); });
-  arm();
+  // TEMP TEST SHORTCUT — press "i" to open the screensaver now. DELETE before submit.
+  addEventListener('keydown',(e)=>{ if(e.key==='i' && !e.metaKey && !e.ctrlKey && !e.altKey) showSaver(); });
 })();
+// ---- the settled small room asks before it leaves ----
+document.addEventListener('click', (e)=>{
+  const dot=e.target.closest && e.target.closest('.dot');
+  if(!dot) return;
+  const w=dot.closest('.win');
+  if(!w || !(w._relicShrunk || w._keepRelic || w._giveRelic)) return;
+  const dots=[...w.querySelectorAll('.bar .dot')];
+  const di=dots.indexOf(dot);
+  if(di!==0 && di!==1) return;               // plus (and anything else) behaves as always
+  e.stopPropagation(); e.preventDefault();   // the relic's own handler never hears this click
+  if(w._confirmOpen) return; w._confirmOpen=true;
+  const t=makeWin('trap','',360);
+  t.querySelector('.bar')?.remove();
+  dragify(t,t); placeNear(t,w);
+  t.style.zIndex=(1000000+(++z));            // above the relic, wherever it sits
+  t.insertAdjacentHTML('beforeend',
+    '<div class="body"><div class="log">'+(di===0?'Are you sure you want to close it?':'Are you sure you want to minimize?')+'</div>'+
+    '<div class="ynrow ynrow-dark">'+
+    '<button class="ynbtn" data-v="yes">yes</button>'+
+    '<button class="ynbtn" data-v="no">no</button>'+
+    '</div></div>');
+  let lock=false;
+  t.querySelectorAll('.ynbtn').forEach(btn=>{
+    btn.onclick=(ev)=>{
+      ev.stopPropagation();
+      if(lock) return; lock=true;
+      uiSelect(); btn.classList.add('picked');
+      setTimeout(()=>{
+        t.remove(); w._confirmOpen=false;
+        if(btn.dataset.v==='yes'){
+          if(di===0) w.remove();
+          else { w.classList.add('minimizing'); setTimeout(()=>w.remove(), 400); }
+        }
+      }, 250);
+    };
+  });
+}, true);
 // hard lock: if anything ever scrolls the page, snap it back to 0 instantly
 addEventListener('scroll', ()=>{ window.scrollTo(0,0); }, true);
 setInterval(()=>{ if(window.scrollY!==0||window.scrollX!==0) window.scrollTo(0,0); }, 100);
