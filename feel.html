@@ -3533,6 +3533,7 @@ function settleRoom(win){
 // how many folders to plant this time — starts at 1, grows as more rooms are finished
 let _batchCount=0;   // how many batches were planted — grows by ONE per finished room
 function plantBatch(){
+  if(window._saverMode) return;   // the screensaver shows the room and the button — no folders, no text
   const done=_batchCount++;                     // rooms settled so far (NOT folders — _plantCount grew per folder and exploded the batches)
   // a new batch replaces the last: the folders from the previous batch sink into the dark fill,
   // so only the freshly planted ones keep the bright grey the rest of the system uses.
@@ -5088,7 +5089,7 @@ function openRoomFaultBrokenUp(dir, emotion, title){
     const T1=[772,340,385,401];   // the center 1's landing box
 
     // hidden master videos, one per file; every window is a live canvas mirror.
-    const usedVids=[...new Set(INSTANCES.map(r=>r[4]).concat([2]))];   // 2 is not placed — it arrives when 1 shrinks
+    const usedVids=[...new Set(INSTANCES.map(r=>r[4]).concat([2,21]))];   // 2 arrives when 1 shrinks; 21 is the dead-TV static
     const masters={};
     usedVids.forEach(nv=>{
       const v=document.createElement('video');
@@ -5161,7 +5162,8 @@ function openRoomFaultBrokenUp(dir, emotion, title){
       cv.width=cw; cv.height=ch;
       cv.style.cssText='position:absolute;inset:0;width:100%;height:100%;border-radius:8px;pointer-events:none;';
       stage.appendChild(cv);
-      const _m={ v:masters[(irow.length===2 && irow!=='1C') ? 2 : ivid], c:cv, x:cv.getContext('2d'), win:win, wpx:wpx, vid:ivid, svg:[ix,iy], sized:true };   // the center column plays 2
+      const _mv=masters[(irow.length===2 && irow!=='1C') ? 2 : ivid];   // the center column plays 2
+      const _m={ v:(masters[21]||_mv), real:_mv, c:cv, x:cv.getContext('2d'), win:win, wpx:wpx, vid:ivid, svg:[ix,iy], sized:true };   // BORN as static; real waits
       mirrors.push(_m); win._mirror=_m;
 
       if(irow==='1C'){ _big1=win; }
@@ -5253,14 +5255,14 @@ function openRoomFaultBrokenUp(dir, emotion, title){
     _grid(OPEN3, 0, x1+24-w3o, 107, 276);              // left: flush left -> tucked under 1
     _grid(OPEN5, x1+w1-24, SW-w5o, 182, 275);          // right: tucked under 1 -> flush right
     _bigify(big1m, {x:x1, y:0, w:w1, h:SHh});          // full height, true ratio, last = on top
-    // the center 1 arrives ALONE; 2s later the RIGHT side lands window by
-    // window — the whole crew inside one second; 2s after that the LEFT side
-    // does the same. one-by-one, but fast.
-    setTimeout(()=>{ _show(_big1); }, 300);
-    const _popIn=(list)=>{ const iv=Math.max(30, Math.floor(1000/Math.max(1,list.length)));
-      list.forEach((mm,i)=>{ const t=setTimeout(()=>_show(mm.win), i*iv); _rowTimers.push(t); }); };
-    setTimeout(()=>{ _popIn(OPEN5); }, 2000);
-    setTimeout(()=>{ _popIn(OPEN3); }, 4000);
+    // the STATIC opening: every opener is on screen from the first moment,
+    // all of them screaming the dead-TV static (21). then the real videos
+    // take over — the center 1 at 2s, the right side at 4s, the left at 6s.
+    const G=masters[21];
+    setTimeout(()=>{ _show(_big1); OPEN5.forEach(mm=>_show(mm.win)); OPEN3.forEach(mm=>_show(mm.win)); }, 300);
+    _rowTimers.push(setTimeout(()=>{ try{ big1m.real.currentTime=0; }catch(_){} big1m.v=big1m.real; }, 2000));
+    _rowTimers.push(setTimeout(()=>{ try{ OPEN5[0] && (OPEN5[0].real.currentTime=0); }catch(_){} OPEN5.forEach(mm=>{ mm.v=mm.real; }); }, 4000));
+    _rowTimers.push(setTimeout(()=>{ try{ OPEN3[0] && (OPEN3[0].real.currentTime=0); }catch(_){} OPEN3.forEach(mm=>{ mm.v=mm.real; }); }, 6000));
 
     // the room's sound plays in the BACKGROUND — no player window.
     (function(){
@@ -5284,8 +5286,8 @@ function openRoomFaultBrokenUp(dir, emotion, title){
       a.addEventListener('error',()=>{ console.warn('fx missing/broken: '+dir+'/fx1.m4a'); _fx1=null; });
       _allAudio.push(a); _fx1=a;
       const tryPlay=()=>a.play().catch(()=>{});
-      tryPlay();                                   // the continuous sound lives from the very start
-      addEventListener('mousedown', tryPlay, {once:true});
+      setTimeout(tryPlay, 2000);                   // the clock enters WITH video 1 — the static opens in hiss alone
+      setTimeout(()=>addEventListener('mousedown', tryPlay, {once:true}), 2000);
     })();
     const _fx1To=(to)=>{                           // smooth volume glide
       if(!_fx1) return;
@@ -5313,7 +5315,7 @@ function openRoomFaultBrokenUp(dir, emotion, title){
       const v2=masters[2];
       const bh=(v2 && v2.videoWidth) ? Math.round(bx.w*v2.videoHeight/v2.videoWidth)+26 : bx.h;
       const w2=_big1;
-      if(v2 && v2.videoWidth) big1m.v=v2;   // the switch happens NOW — one frame, never seen mid-flight
+      if(v2 && v2.videoWidth){ big1m.real=v2; if(!(G && big1m.v===G)) big1m.v=v2; }   // real is now 2 — but if it fell to static, it STAYS static and wakes with the wall
       w2.style.transition='left 1.2s ease, top 1.2s ease, width 1.2s ease, height 1.2s ease';
       w2.style.left=bx.x+'px'; w2.style.top=bx.y+'px';
       w2.style.width=bx.w+'px'; w2.style.height=bh+'px';
@@ -5325,11 +5327,14 @@ function openRoomFaultBrokenUp(dir, emotion, title){
       }, 1300);
     };
     setTimeout(()=>{
-      _clk();                                      // the click — then everything moves
-      OPEN3.forEach(mm=>_shrinkTo(mm, [mm.svg[0], mm.svg[1], 107, 276]));
-      OPEN5.forEach(mm=>_shrinkTo(mm, [mm.svg[0], mm.svg[1], 182, 275]));
-      _shrink1to2();
-    }, 7000);
+      _clk();                                      // the CLICK — and the picture dies first
+      if(G){ OPEN3.forEach(mm=>{ mm.v=G; }); OPEN5.forEach(mm=>{ mm.v=G; }); big1m.v=G; }   // back to static, a beat of it on screen
+      _rowTimers.push(setTimeout(()=>{           // ...and only THEN everything shrinks
+        OPEN3.forEach(mm=>_shrinkTo(mm, [mm.svg[0], mm.svg[1], 107, 276]));
+        OPEN5.forEach(mm=>_shrinkTo(mm, [mm.svg[0], mm.svg[1], 182, 275]));
+        _shrink1to2();
+      }, 700));
+    }, 8000);
 
     // ---- the rows: top and bottom first, then inward, each row growing from
     // BOTH edges toward the middle; a finished row births its center 1.
@@ -5341,7 +5346,7 @@ function openRoomFaultBrokenUp(dir, emotion, title){
       const t=setInterval(()=>{
         if(k>=seq.length){ clearInterval(t); if(done) done(); return; }
         _clk();                                    // every added window clicks
-        _show(seq[k++].win);
+        _show(seq[k++].win);                       // arrives as static — stays static until the finale
       }, iv||120);
       _rowTimers.push(t);
     };
@@ -5358,9 +5363,9 @@ function openRoomFaultBrokenUp(dir, emotion, title){
     // then the rest of the rows chain in — quick.
     setTimeout(()=>{
       _revealRow(rows.C, ()=>{
-        _runPair(['A','F'], ()=> _runPair(['B','E'], ()=> _runPair(['D'], null)));
+        _runPair(['A','F'], ()=> _runPair(['B','E'], ()=> _runPair(['D'], _staticFinale)));
       }, 90);
-    }, 8400);
+    }, 10100);
 
     if(title){
       _logLine('==============================', 'dim');
@@ -5368,10 +5373,78 @@ function openRoomFaultBrokenUp(dir, emotion, title){
       _logLine('it stays there now. I can open it again whenever I want. I probably will.', 'say');
       _logLine('==============================', 'dim');
     }
+    // the finale: the wall of static holds for 8 full seconds — then every
+    // screen BLINKS its real picture for a breath, drops back to static, and
+    // each window finds its picture at its own random moment. after that the
+    // signal keeps breaking forever — varied lengths, sometimes a flash,
+    // sometimes a long stare, sometimes a crowd, sometimes one.
+    let _hissGain=null, _hissTick=null;
+    (function(){
+      try{
+        const ac=_uiCtx();
+        const len=ac.sampleRate*2, buf=ac.createBuffer(1, len, ac.sampleRate);
+        const d=buf.getChannelData(0);
+        for(let i2=0;i2<len;i2++) d[i2]=Math.random()*2-1;
+        const src=ac.createBufferSource(); src.buffer=buf; src.loop=true;
+        window._hissSrc=src; window._hissAC=ac;
+        const flt=ac.createBiquadFilter(); flt.type='lowpass'; flt.frequency.value=6500;   // takes the digital edge off — an old TV, not a test tone
+        const g=ac.createGain(); g.gain.value=0;
+        src.connect(flt); flt.connect(g); g.connect(ac.destination);
+        src.start();
+        _hissGain=g;
+        _hissTick=setInterval(()=>{
+          if(!_hissGain) return;
+          const vis2=mirrors.filter(m=>m.win && document.body.contains(m.win) && m.win.style.opacity==='1');
+          const noisy=vis2.filter(m=>m.v===G).length;
+          const frac=vis2.length ? noisy/vis2.length : 0;
+          const target=frac<=0 ? 0 : Math.min(0.4, 0.05 + frac*0.35);
+          try{ _hissGain.gain.linearRampToValueAtTime(target, ac.currentTime+0.25); }catch(_){}
+        }, 200);
+        _rowTimers.push(_hissTick);
+      }catch(_){}
+    })();
+    const _staticFinale=()=>{
+      if(!G){ mirrors.forEach(m=>{ m.v=m.real; }); return; }
+      const held=mirrors.filter(m=>m.v===G);
+      const _wake=()=>{
+        let maxD=0;
+        held.forEach(m=>{
+          const d=500+Math.random()*8000; if(d>maxD) maxD=d;                  // each window wakes on its own clock
+          _rowTimers.push(setTimeout(()=>{ m.v=m.real; }, d));
+        });
+        _rowTimers.push(setTimeout(_brokenSignal, maxD+800));                 // only then the forever-glitch begins
+      };
+      const _blink=(times)=>{                                                 // real / static / real / static — a few beats
+        held.forEach(m=>{ m.v=m.real; });
+        _rowTimers.push(setTimeout(()=>{
+          held.forEach(m=>{ m.v=G; });
+          if(times>1) _rowTimers.push(setTimeout(()=>_blink(times-1), 280));
+          else _wake();
+        }, 300));
+      };
+      _rowTimers.push(setTimeout(()=>_blink(3), 8000));
+    };
+    const _brokenSignal=()=>{
+      _rowTimers.push(setInterval(()=>{
+        if(!G || !G.videoWidth) return;
+        const vis=mirrors.filter(m=>m.win && document.body.contains(m.win) && m.win.style.opacity==='1' && !m._g && m.v!==G);
+        if(!vis.length) return;
+        const n=(Math.random()<0.35) ? 10+(Math.random()*16|0) : 3+(Math.random()*6|0);   // a real crowd — up to 25 at once
+        for(let q=0;q<n && vis.length;q++){
+          const m=vis.splice(Math.random()*vis.length|0,1)[0];
+          m._g=true; m.v=G;
+          const stay=(Math.random()<0.3) ? 1800+Math.random()*2600 : 150+Math.random()*900;   // a third of them STAY — up to ~4.4s of static
+          _rowTimers.push(setTimeout(()=>{ m.v=m.real; m._g=false; }, stay));
+        }
+      }, 900));
+    };
     // clicking a planted folder: wipe the herd, keep ONE small window still
     // playing — the center 1, the window the room opened with.
     window._onPlantedFolderClick=()=>{
       _roomSongs.forEach(au=>{ try{ au.pause(); }catch(_){} });
+      if(_hissGain){ try{ _hissGain.gain.cancelScheduledValues(0); _hissGain.gain.value=0; }catch(_){} _hissGain=null; }
+      try{ if(window._hissSrc){ window._hissSrc.stop(); window._hissSrc=null; } }catch(_){}
+      if(_hissTick){ clearInterval(_hissTick); _hissTick=null; }
       document.querySelectorAll('.win.songwin').forEach(w=>{ if(!w._thisRoomSong) return;
         if(w._roomAudio){ try{ w._roomAudio.pause(); }catch(_){} } w.remove(); });
       const wins=[...document.querySelectorAll('.win')].filter(w=>w._brokenPartWin && !w._relicShrunk && !w._keepRelic && document.body.contains(w));
@@ -5983,7 +6056,7 @@ function openFearRoomBrokenUp(dir, emotion, title){
     const FLOOD_PER_STACK=14;   // was 40 — hundreds of layered windows froze the GPU
     const LIVE_PER_STACK=8;     // was 15
     let _floodTotal=0;          // hard ceiling on ALL copies together
-    const FLOOD_TOTAL=420;
+    const FLOOD_TOTAL=320;   // was 420 — headroom, the stall zone is never approached
     let _fearFrozen=false;   // set the moment a planted folder is clicked
     // clicking a planted folder FREEZES the room: every video stops mid-frame,
     // the song goes silent, the flood dies. NOTHING is deleted — the mess stays.
@@ -6061,12 +6134,17 @@ function openFearRoomBrokenUp(dir, emotion, title){
       if(_fearFrozen) return;
       const st=_stacks[spec.id] || (_stacks[spec.id]={count:0,pos:null,dir:null,topVideo:null,topOverlay:null,topWin:null});
       if(_floodTotal>=FLOOD_TOTAL) return;
-      if(st.count>=(spec.live?LIVE_PER_STACK:FLOOD_PER_STACK)) return;
+      if(st.count>=(spec.live?LIVE_PER_STACK:(window._saverMode?1e9:FLOOD_PER_STACK))) return;
       st.count++; _floodTotal++;
       // every copy takes a visible step: big stacks shrink copy by copy,
       // small stacks grow copy by copy.
       if(st.k===undefined) st.k=1;
-      if(spec.grow)      st.k=Math.min(spec.growCap||2, st.k*1.18);   // the TV (11) swells toward the hero's size
+      if(window._saverMode){
+        if(spec.vid===7)      st.k=0.3+Math.random()*2.2;                 // only 7 earns the giant range
+        else if([4,6,9,10,12].indexOf(spec.vid)!==-1) st.k=0.3+Math.random()*1.0;   // other eyes: dots to medium, never a wall
+        else                  st.k=0.25+Math.random()*0.65;               // the rest stays SMALL — the focus is the eyes
+      }
+      else if(spec.grow) st.k=Math.min(spec.growCap||2, st.k*1.18);   // the TV (11) swells toward the hero's size
       else if(spec.big)  st.k=Math.max(0.25, st.k*0.82);              // big stacks end really small
       else               st.k=Math.min(2.4, st.k*1.12);               // small stacks end really big
       // scale the VIDEO area only — the 26px bar is fixed chrome. scaling the
@@ -6085,16 +6163,23 @@ function openFearRoomBrokenUp(dir, emotion, title){
       // mostly the stack marches copy over copy — but a quarter of the spawns
       // JUMP to a fresh random spot (middle of the screen included) and start
       // a new march from there, so the pile grows from everywhere at once.
-      if(Math.random()<0.25){
+      if(Math.random()<(window._saverMode?0.6:0.25)){
         st.pos=[Math.random()*(FW-cw), Math.random()*(window.innerHeight-ch)];
         st.dir=[(Math.random()<0.5?-1:1)*(34+Math.random()*76), (Math.random()<0.5?-1:1)*(24+Math.random()*44)];
       }
       let stepK=0.35+Math.random()*1.35;
       if(st.hugRight>0){ stepK*=0.12; st.hugRight--; }   // linger: drop 2-3 copies ON the console strip
       let nx=st.pos[0]+st.dir[0]*stepK, ny=st.pos[1]+st.dir[1]*stepK;
-      if(nx>FW-cw){ st.dir[0]*=-1; nx=FW-cw; st.hugRight=2; }   // hit the right edge -> sit on the console
-      else if(nx<0){ st.dir[0]*=-1; nx=0; }
-      if(ny<0 || ny>window.innerHeight-ch){ st.dir[1]*=-1; ny=Math.max(0,Math.min(window.innerHeight-ch,ny)); }
+      if(window._saverMode){
+        // saver: windows may BLEED over every edge — at least ~40% stays visible
+        const xLo=-cw*0.4, xHi=FW-cw*0.6, yLo=-ch*0.35, yHi=window.innerHeight-ch*0.5;
+        if(nx>xHi){ st.dir[0]*=-1; nx=xHi; } else if(nx<xLo){ st.dir[0]*=-1; nx=xLo; }
+        if(ny>yHi){ st.dir[1]*=-1; ny=yHi; } else if(ny<yLo){ st.dir[1]*=-1; ny=yLo; }
+      } else {
+        if(nx>FW-cw){ st.dir[0]*=-1; nx=FW-cw; st.hugRight=2; }   // hit the right edge -> sit on the console
+        else if(nx<0){ st.dir[0]*=-1; nx=0; }
+        if(ny<0 || ny>window.innerHeight-ch){ st.dir[1]*=-1; ny=Math.max(0,Math.min(window.innerHeight-ch,ny)); }
+      }
       st.pos=[nx,ny];
 
 
@@ -6389,9 +6474,19 @@ function openFearRoomBrokenUp(dir, emotion, title){
 
     // ---- the radio's heartbeat: the drip and the bomb — clones only,
     // the original composition never moves.
+    const _EYEVIDS=[4,6,7,9,10,12];
+    const SAVER_CAP=180;                            // saver breath ceiling — far below the video-decoder cliff
     const _spawnOne=()=>{   // one clone, from one random living source
-      const alive=_floodSources.filter(sfc=>document.body.contains(sfc.el));
+      let alive=_floodSources.filter(sfc=>document.body.contains(sfc.el));
       if(!alive.length) return;
+      if(window._saverMode){
+        const sevens=alive.filter(sfc=>sfc.spec.vid===7);
+        const eyed=alive.filter(sfc=>_EYEVIDS.indexOf(sfc.spec.vid)!==-1);
+        if(_floodTotal>=SAVER_CAP*0.6 && sevens.length){ alive=sevens; }   // the LAST stretch is ALL 7 — the wall closes on it
+        else { const r2=Math.random();
+          if(r2<0.55 && sevens.length) alive=sevens;                        // 7 rules everywhere, all over the screen
+          else if(r2<0.85 && eyed.length) alive=eyed; }
+      }
       const sfc=alive[Math.random()*alive.length|0];
       spawnClone(sfc.spec, sfc.el.getBoundingClientRect());
     };
@@ -6410,6 +6505,29 @@ function openFearRoomBrokenUp(dir, emotion, title){
       const s11=_floodSources.find(sfc=>sfc.spec.grow && document.body.contains(sfc.el));
       if(s11) setTimeout(()=>spawnClone(s11.spec, s11.el.getBoundingClientRect()), 200);
     };
+    // SAVER MODE ONLY: the breath. full -> empty at the SAME pace the drip
+    // fills (one per beat), down to the untouched original composition — the
+    // room as it begins — then the counters reset and the room fills itself
+    // again. normal runs never enter this block.
+    if(window._saverMode){
+      let _svEmptying=false;
+      const _svT=setInterval(()=>{
+        if(_fearFrozen){ clearInterval(_svT); return; }
+        if(!_svEmptying){
+          if(_floodTotal>=SAVER_CAP) _svEmptying=true;     // full — turn the tide (long before anything can stall)
+          return;                                          // filling is the drip's job
+        }
+        const clones=[...document.querySelectorAll('.win')].filter(w=>w._fearClone && document.body.contains(w));
+        if(!clones.length){                                // empty — the room stands alone again
+          _svEmptying=false; _floodTotal=0;
+          Object.values(_stacks).forEach(st=>{ st.count=0; });
+          return;
+        }
+        const w=clones[Math.random()*clones.length|0];
+        w.querySelectorAll('video').forEach(v=>{ try{ v.pause(); v.removeAttribute('src'); v.load(); }catch(_){} });
+        w.remove();
+      }, 600);
+    }
 
     if(title){
       _logLine('==============================', 'dim');
@@ -7826,7 +7944,6 @@ function prefetchRooms(){
   const first=dirs.indexOf(window._nextRoomPick);
   if(first>0){ dirs.splice(first,1); dirs.unshift(window._nextRoomPick); }
   const files=[];
-  files.push('rooms/Screen.mp4');   // the screensaver film — warm before anyone goes idle
   dirs.forEach(d=>{
     files.push(d+'/background.mp4', d+'/background.jpeg', d+'/sound.mp3', d+'/sound.m4a', d+'/fx.m4a');
     for(let i=1;i<=8;i++) files.push(d+'/radio'+i+'.m4a');
@@ -7887,7 +8004,19 @@ function revealDesktop(){
   }, 280);
 }
 
-openInstallScreen();   // the real opening — the desktop reveals only after install
+(function(){
+  let sv=false; try{ sv=sessionStorage.getItem('feelSaver')==='1'; sessionStorage.removeItem('feelSaver'); }catch(_){}
+  if(sv){
+    window._saverMode=true;                        // no planted folders, no idle clock, no console
+    const sl=document.getElementById('syslog'); if(sl) sl.style.display='none';
+    const br=document.getElementById('brand'); if(br) br.style.display='none';   // no words at all — image and button only
+    _introShown=true;
+    openFearRoomBrokenUp('rooms/how afraid i am', 'fear', 'how afraid i am');
+    setTimeout(()=>{ if(window._showSaverButton) window._showSaverButton(); }, 50);   // its IIFE is defined further down the file
+  } else {
+    openInstallScreen();   // the real opening — the desktop reveals only after install
+  }
+})();
 setTimeout(prefetchRooms, 1200);   // the rooms start downloading DURING the install screen
 // TEMP TEST SHORTCUT — press "c" for the cheese room. DELETE before submit.
 addEventListener('keydown', (e)=>{
@@ -7953,48 +8082,36 @@ addEventListener('keydown', (e)=>{
 (function(){
   const IDLE_MS=60*1000;
   let idleT=null, saver=null;
-  const closeSaver=()=>{ if(!saver) return;
-    const v=saver.querySelector('video');
-    if(v){ try{ v.pause(); v.removeAttribute('src'); v.load(); }catch(_){} }
-    saver.remove(); saver=null; };
-  const arm=()=>{ if(idleT) clearTimeout(idleT); idleT=setTimeout(showSaver, IDLE_MS); };
-  const showSaver=()=>{
+  const closeSaver=()=>{ if(!saver) return; saver.remove(); saver=null; };
+  const arm=()=>{ if(idleT) clearTimeout(idleT); idleT=setTimeout(()=>{
+    try{ sessionStorage.setItem('feelSaver','1'); }catch(_){}
+    location.reload();                             // boots straight into the fear room — see the saver-boot block
+  }, IDLE_MS); };
+  const showSaver=()=>{   // runs ONLY on a saver-mode boot: the fear room is already opening underneath
     if(saver) return;
     saver=document.createElement('div');
-    saver.style.cssText='position:fixed;inset:0;z-index:5000000;background:#000;opacity:0;transition:opacity 1.2s ease;';
+    saver.style.cssText='position:fixed;inset:0;z-index:5000000;background:transparent;overflow:hidden;';
     saver.innerHTML=
-      '<video autoplay loop playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;"></video>'+
-      '<div class="win journal" data-box style="position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);animation:none;width:auto;">'+
+      '<div class="win journal" data-box style="position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);animation:none;width:auto;z-index:20;">'+
+      ''+
         '<div class="body" style="padding:40px;display:flex;justify-content:center;align-items:center;max-height:none">'+
           '<div class="ynrow" style="margin-top:0">'+
           '<button class="ynbtn picked saverbtn" data-go>start</button></div></div>';
     document.body.appendChild(saver);
-    // the machine under the film goes QUIET: every sound and every video
-    // pauses. no mixing, no wasted decoding. the only way out is start ->
-    // reload, so nothing ever needs waking back up.
-    try{ _allAudio.forEach(a=>{ try{ a.pause(); }catch(_){} }); }catch(_){}
-    try{ if(typeof currentAudio!=='undefined' && currentAudio) currentAudio.pause(); }catch(_){}
-    document.querySelectorAll('video').forEach(vv=>{ if(!saver.contains(vv)){ try{ vv.pause(); }catch(_){} } });
-    // the CAMERA goes fully dark — the hardware light turns off, zero capture.
-    try{ if(typeof video!=='undefined' && video && video.srcObject){
-      video.srcObject.getTracks().forEach(t=>t.stop()); video.srcObject=null; camOK=false; } }catch(_){}
-    // every ticking timer in the machine stops — rooms, eyes, floods, all of it.
-    try{ const top=setTimeout(()=>{},0); for(let ti=1; ti<=top; ti++){ clearTimeout(ti); clearInterval(ti); } }catch(_){}
-    const v=saver.querySelector('video');
-    v.src=_vsrc('rooms/Screen.mp4');
-    v.play().catch(()=>{ v.muted=true; v.play().catch(()=>{}); });   // sound if allowed; never a black screen
-    requestAnimationFrame(()=>{ saver.style.opacity='1'; });
-    saver.querySelector('[data-go]').addEventListener('click',(e)=>{ e.stopPropagation(); uiSelect(); location.reload(); });
-    saver.addEventListener('mousedown',(e)=>e.stopPropagation(), true);   // the desktop under it never hears the mouse
+    const _bx=saver.querySelector('[data-box]'); if(_bx) _bx._settledRoom=true;   // the room's opening wipe must not eat the button
+    window._showSaverButton=null;
+    saver.querySelector('[data-go]').addEventListener('click',(e)=>{ e.stopPropagation(); window._saverMode=false; location.reload(); });
+    saver.addEventListener('mousedown',(e)=>e.stopPropagation(), true);   // the room under it never hears the mouse — image and button only
   };
+  window._showSaverButton=showSaver;
   let armed=false;
-  window._armScreensaver=()=>{ if(armed) return; armed=true; arm(); };
+  window._armScreensaver=()=>{ if(armed || window._saverMode) return; armed=true; arm(); };
   ['mousemove','mousedown','keydown','touchstart'].forEach(ev=>
     addEventListener(ev, ()=>{ if(armed && !saver) arm(); }, true));   // while the saver is up, only its X and button decide
   // TEMP TEST SHORTCUT — press "e" to fire the error meltdown now. DELETE before submit.
   addEventListener('keydown',(e)=>{ if(e.key==='e' && !e.metaKey && !e.ctrlKey && !e.altKey) breakSystem(null, Math.random()<0.5, 'I never sent it'); });
-  // TEMP TEST SHORTCUT — press "i" to open the screensaver now. DELETE before submit.
-  addEventListener('keydown',(e)=>{ if(e.key==='i' && !e.metaKey && !e.ctrlKey && !e.altKey) showSaver(); });
+  // TEMP TEST SHORTCUT — press "i" to enter saver mode now. DELETE before submit.
+  addEventListener('keydown',(e)=>{ if(e.key==='i' && !e.metaKey && !e.ctrlKey && !e.altKey){ try{ sessionStorage.setItem('feelSaver','1'); }catch(_){} location.reload(); } });
 })();
 // ---- the settled small room asks before it leaves ----
 document.addEventListener('click', (e)=>{
