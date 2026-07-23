@@ -4073,8 +4073,26 @@ function openRoomEmptyBrokenUp(dir, emotion, title){
       }
       _loopHere();   // 18 reached the whole screen — it stays
     });
-    // a missing/broken clip anywhere in the chain: stay where we are and loop.
-    v.addEventListener('error',()=>{ if(idx>0){ idx--; _place(CHAIN[idx][1], CHAIN[idx][2]); _playCurrent(); v.loop=true; } });
+    // a broken clip must not kill the chain. two reload attempts; if it is
+    // truly gone, SKIP it and grow on. only a missing LAST clip parks the
+    // strip on the previous one in a loop (the original ending behavior).
+    let _errN=0;
+    v.addEventListener('playing',()=>{ _errN=0; });
+    v.addEventListener('error',()=>{
+      const [vn]=CHAIN[idx];
+      if(++_errN<=2){
+        setTimeout(()=>{ try{ v.src=_vsrc(dir+'/'+vn+'.mp4'); v.load(); v.play().catch(()=>{}); }catch(_){ } }, 800);
+        return;
+      }
+      _errN=0;
+      if(idx<CHAIN.length-1){
+        idx++; _grow();
+        if(window._emptyAddWriting) window._emptyAddWriting();
+        _place(CHAIN[idx][1], CHAIN[idx][2]); _playCurrent();
+      } else if(idx>0){
+        idx--; _place(CHAIN[idx][1], CHAIN[idx][2]); _playCurrent(); v.loop=true;
+      }
+    });
 
     // ---- the watchdog: the chain must NEVER stall. every 2s we check whether
     // the clip actually moved. ~8s frozen -> one reload attempt of the same
