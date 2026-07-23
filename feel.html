@@ -4336,16 +4336,7 @@ function openRoomLikeThemBrokenUp(dir, emotion, title){
       paint._pf=(paint._pf||0)+1;   // alternate-frame painting (the fault/fear rooms' proven trick): half the GPU drawing, invisible to the eye
       mirrors.forEach((m,_mi)=>{
         const v=m.v; if(!v.videoWidth) return;
-        if(m.sized && ((paint._pf+_mi)%(window._lowPower?3:2))) return;   // sizing always runs; painting takes turns (a struggling machine paints every 3rd)
-        // sample the VIDEO once per frame into a cheap staging canvas — every
-        // mirror blits from the canvas. video->canvas is the expensive draw
-        // (full color conversion); canvas->canvas is nearly free. same pixels.
-        if(!v._stage){ v._stage=document.createElement('canvas'); v._stageX=v._stage.getContext('2d'); v._stageF=-1; }
-        if(v._stageF!==paint._pf){
-          v._stageF=paint._pf;
-          if(v._stage.width!==v.videoWidth){ v._stage.width=v.videoWidth; v._stage.height=v.videoHeight; }
-          v._stageX.drawImage(v,0,0);
-        }
+        if(m.sized && ((paint._pf+_mi)%2)) return;   // sizing always runs; painting takes turns
         if(m.win && !m.sized){
           m.sized=true;
           const h2=Math.round(m.wpx*v.videoHeight/v.videoWidth)+26;
@@ -4357,7 +4348,7 @@ function openRoomLikeThemBrokenUp(dir, emotion, title){
         let sw,sh,sxx,syy;
         if(vr>cr){ sh=v.videoHeight; sw=sh*cr; sxx=(v.videoWidth-sw)/2; syy=0; }
         else{ sw=v.videoWidth; sh=sw/cr; sxx=0; syy=(v.videoHeight-sh)/2; }
-        ctx.drawImage(v._stage, sxx,syy,sw,sh, 0,0,cw,ch);
+        ctx.drawImage(v, sxx,syy,sw,sh, 0,0,cw,ch);
       });
       requestAnimationFrame(paint);
     })();
@@ -4705,16 +4696,7 @@ function openRoomLookingBrokenUp(dir, emotion, title){
       paint._pf=(paint._pf||0)+1;   // alternate-frame painting (the fault/fear rooms' proven trick): half the GPU drawing, invisible to the eye
       mirrors.forEach((m,_mi)=>{
         const v=m.v; if(!v.videoWidth) return;
-        if(m.sized && ((paint._pf+_mi)%(window._lowPower?3:2))) return;   // sizing always runs; painting takes turns (a struggling machine paints every 3rd)
-        // sample the VIDEO once per frame into a cheap staging canvas — every
-        // mirror blits from the canvas. video->canvas is the expensive draw
-        // (full color conversion); canvas->canvas is nearly free. same pixels.
-        if(!v._stage){ v._stage=document.createElement('canvas'); v._stageX=v._stage.getContext('2d'); v._stageF=-1; }
-        if(v._stageF!==paint._pf){
-          v._stageF=paint._pf;
-          if(v._stage.width!==v.videoWidth){ v._stage.width=v.videoWidth; v._stage.height=v.videoHeight; }
-          v._stageX.drawImage(v,0,0);
-        }
+        if(m.sized && ((paint._pf+_mi)%2)) return;   // sizing always runs; painting takes turns
         if(m.win && !m.sized){
           m.sized=true;
           const bar=m.noBar?0:26;
@@ -4773,7 +4755,7 @@ function openRoomLookingBrokenUp(dir, emotion, title){
             ctx.restore();
           }
         } else {
-          ctx.drawImage(v._stage, sxx,syy,sw,sh, 0,0,cw,ch);
+          ctx.drawImage(v, sxx,syy,sw,sh, 0,0,cw,ch);
         }
       });
       requestAnimationFrame(paint);
@@ -4787,7 +4769,7 @@ function openRoomLookingBrokenUp(dir, emotion, title){
     // hovering any visible window swaps ITS video once (window stays, only
     // the picture changes). 5s after the first swap, mouse travel births the
     // 19-tiles in RANDOM order; 5s after that they bomb on their own.
-    const DPR=window._lowPower ? 1 : Math.min(2, window.devicePixelRatio||1);   // a struggling machine paints at 1x — invisible in motion, huge GPU relief
+    const DPR=Math.min(2, window.devicePixelRatio||1);
     const SH19=1;   // the 19-tiles stay FULL size — they must fill the screen edge to edge
     const PHASE1=new Set([1,6,11]), PHASE2=new Set([3,18,15,12]);
     let _n1=0, _n2=0;
@@ -5096,7 +5078,7 @@ function openRoomFaultBrokenUp(dir, emotion, title){
 
     const SW=document.documentElement.clientWidth, SHh=document.documentElement.clientHeight;
     const sx=SW/1920, sy=SHh/1080, ss=Math.min(sx,sy);
-    const DPR=window._lowPower ? 1 : Math.min(2, window.devicePixelRatio||1);   // a struggling machine paints at 1x — invisible in motion, huge GPU relief
+    const DPR=Math.min(2, window.devicePixelRatio||1);
     // window boxes follow the SVG EXACTLY (the canvas cover-crops the video to
     // fill the box), scaled up a touch so neighbors overlap — no gaps — and
     // spread outward so the outer columns START outside the screen.
@@ -5175,16 +5157,7 @@ function openRoomFaultBrokenUp(dir, emotion, title){
       paint._pf=(paint._pf||0)+1;   // alternate-frame painting (the fault/fear rooms' proven trick): half the GPU drawing, invisible to the eye
       mirrors.forEach((m,_mi)=>{
         const v=m.v; if(!v.videoWidth) return;
-        if(m.sized && ((paint._pf+_mi)%(window._lowPower?3:2))) return;   // sizing always runs; painting takes turns (a struggling machine paints every 3rd)
-        // sample the VIDEO once per frame into a cheap staging canvas — every
-        // mirror blits from the canvas. video->canvas is the expensive draw
-        // (full color conversion); canvas->canvas is nearly free. same pixels.
-        if(!v._stage){ v._stage=document.createElement('canvas'); v._stageX=v._stage.getContext('2d'); v._stageF=-1; }
-        if(v._stageF!==paint._pf){
-          v._stageF=paint._pf;
-          if(v._stage.width!==v.videoWidth){ v._stage.width=v.videoWidth; v._stage.height=v.videoHeight; }
-          v._stageX.drawImage(v,0,0);
-        }
+        if(m.sized && ((paint._pf+_mi)%2)) return;   // sizing always runs; painting takes turns
         if(m.win && !m.sized){
           m.sized=true;
           const h2=Math.round(m.wpx*v.videoHeight/v.videoWidth)+26;
@@ -5196,7 +5169,7 @@ function openRoomFaultBrokenUp(dir, emotion, title){
         let sw,sh,sxx,syy;
         if(vr>cr){ sh=v.videoHeight; sw=sh*cr; sxx=(v.videoWidth-sw)/2; syy=0; }
         else{ sw=v.videoWidth; sh=sw/cr; sxx=0; syy=(v.videoHeight-sh)/2; }
-        ctx.drawImage(v._stage, sxx,syy,sw,sh, 0,0,cw,ch);
+        ctx.drawImage(v, sxx,syy,sw,sh, 0,0,cw,ch);
       });
       requestAnimationFrame(paint);
     })();
@@ -5642,22 +5615,13 @@ function openRoomSaidBrokenUp(dir, emotion, title){
     const mirrors=[];
     let _bgWin=null, _relic20=null;
     const _roomSongs=[];
-    const DPR=window._lowPower ? 1 : Math.min(2, window.devicePixelRatio||1);   // a struggling machine paints at 1x — invisible in motion, huge GPU relief
+    const DPR=Math.min(2, window.devicePixelRatio||1);
     (function paint(){
       if(!Object.values(masters).some(v=>document.body.contains(v))) return;
       paint._pf=(paint._pf||0)+1;   // alternate-frame painting (the fault/fear rooms' proven trick): half the GPU drawing, invisible to the eye
       mirrors.forEach((m,_mi)=>{
         const v=m.v; if(!v.videoWidth) return;
-        if(m.sized && ((paint._pf+_mi)%(window._lowPower?3:2))) return;   // sizing always runs; painting takes turns (a struggling machine paints every 3rd)
-        // sample the VIDEO once per frame into a cheap staging canvas — every
-        // mirror blits from the canvas. video->canvas is the expensive draw
-        // (full color conversion); canvas->canvas is nearly free. same pixels.
-        if(!v._stage){ v._stage=document.createElement('canvas'); v._stageX=v._stage.getContext('2d'); v._stageF=-1; }
-        if(v._stageF!==paint._pf){
-          v._stageF=paint._pf;
-          if(v._stage.width!==v.videoWidth){ v._stage.width=v.videoWidth; v._stage.height=v.videoHeight; }
-          v._stageX.drawImage(v,0,0);
-        }
+        if(m.sized && ((paint._pf+_mi)%2)) return;   // sizing always runs; painting takes turns
         if(m.win && !m.sized){
           m.sized=true;
           if(!m.fullBg){
@@ -5672,7 +5636,7 @@ function openRoomSaidBrokenUp(dir, emotion, title){
         let sw,sh,sxx,syy;
         if(vr>cr){ sh=v.videoHeight; sw=sh*cr; sxx=(v.videoWidth-sw)/2; syy=0; }
         else{ sw=v.videoWidth; sh=sw/cr; sxx=0; syy=(v.videoHeight-sh)/2; }
-        ctx.drawImage(v._stage, sxx,syy,sw,sh, 0,0,cw,ch);
+        ctx.drawImage(v, sxx,syy,sw,sh, 0,0,cw,ch);
       });
       requestAnimationFrame(paint);
     })();
