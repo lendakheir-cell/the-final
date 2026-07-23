@@ -3637,13 +3637,7 @@ function openRoomBrokenUp(dir, emotion, title){
           const m=_masters[k];
           if(!m.v.videoWidth || !document.body.contains(m.v)) return;
           m.mirrors=m.mirrors.filter(c=>document.body.contains(c.el));
-          if(!m.mirrors.length) return;
-          // sample the video ONCE per frame into a staging canvas; mirrors blit
-          // from it (video->canvas is the expensive draw, canvas->canvas is cheap)
-          if(!m.stage){ m.stage=document.createElement('canvas'); m.stageX=m.stage.getContext('2d'); }
-          if(m.stage.width!==m.v.videoWidth){ m.stage.width=m.v.videoWidth; m.stage.height=m.v.videoHeight; }
-          m.stageX.drawImage(m.v,0,0);
-          m.mirrors.forEach((c,i)=>{ if((_pf+i)%(window._lowPower?3:2)===0) c.x.drawImage(m.stage, 0,0, c.el.width, c.el.height); });
+          m.mirrors.forEach((c,i)=>{ if((_pf+i)%2===0) c.x.drawImage(m.v, 0,0, c.el.width, c.el.height); });
         });
         requestAnimationFrame(paintAll);
       })();
