@@ -4337,6 +4337,15 @@ function openRoomLikeThemBrokenUp(dir, emotion, title){
       mirrors.forEach((m,_mi)=>{
         const v=m.v; if(!v.videoWidth) return;
         if(m.sized && ((paint._pf+_mi)%(window._lowPower?3:2))) return;   // sizing always runs; painting takes turns (a struggling machine paints every 3rd)
+        // sample the VIDEO once per frame into a cheap staging canvas — every
+        // mirror blits from the canvas. video->canvas is the expensive draw
+        // (full color conversion); canvas->canvas is nearly free. same pixels.
+        if(!v._stage){ v._stage=document.createElement('canvas'); v._stageX=v._stage.getContext('2d'); v._stageF=-1; }
+        if(v._stageF!==paint._pf){
+          v._stageF=paint._pf;
+          if(v._stage.width!==v.videoWidth){ v._stage.width=v.videoWidth; v._stage.height=v.videoHeight; }
+          v._stageX.drawImage(v,0,0);
+        }
         if(m.win && !m.sized){
           m.sized=true;
           const h2=Math.round(m.wpx*v.videoHeight/v.videoWidth)+26;
@@ -4348,7 +4357,7 @@ function openRoomLikeThemBrokenUp(dir, emotion, title){
         let sw,sh,sxx,syy;
         if(vr>cr){ sh=v.videoHeight; sw=sh*cr; sxx=(v.videoWidth-sw)/2; syy=0; }
         else{ sw=v.videoWidth; sh=sw/cr; sxx=0; syy=(v.videoHeight-sh)/2; }
-        ctx.drawImage(v, sxx,syy,sw,sh, 0,0,cw,ch);
+        ctx.drawImage(v._stage, sxx,syy,sw,sh, 0,0,cw,ch);
       });
       requestAnimationFrame(paint);
     })();
@@ -4697,6 +4706,15 @@ function openRoomLookingBrokenUp(dir, emotion, title){
       mirrors.forEach((m,_mi)=>{
         const v=m.v; if(!v.videoWidth) return;
         if(m.sized && ((paint._pf+_mi)%(window._lowPower?3:2))) return;   // sizing always runs; painting takes turns (a struggling machine paints every 3rd)
+        // sample the VIDEO once per frame into a cheap staging canvas — every
+        // mirror blits from the canvas. video->canvas is the expensive draw
+        // (full color conversion); canvas->canvas is nearly free. same pixels.
+        if(!v._stage){ v._stage=document.createElement('canvas'); v._stageX=v._stage.getContext('2d'); v._stageF=-1; }
+        if(v._stageF!==paint._pf){
+          v._stageF=paint._pf;
+          if(v._stage.width!==v.videoWidth){ v._stage.width=v.videoWidth; v._stage.height=v.videoHeight; }
+          v._stageX.drawImage(v,0,0);
+        }
         if(m.win && !m.sized){
           m.sized=true;
           const bar=m.noBar?0:26;
@@ -4755,7 +4773,7 @@ function openRoomLookingBrokenUp(dir, emotion, title){
             ctx.restore();
           }
         } else {
-          ctx.drawImage(v, sxx,syy,sw,sh, 0,0,cw,ch);
+          ctx.drawImage(v._stage, sxx,syy,sw,sh, 0,0,cw,ch);
         }
       });
       requestAnimationFrame(paint);
@@ -5158,6 +5176,15 @@ function openRoomFaultBrokenUp(dir, emotion, title){
       mirrors.forEach((m,_mi)=>{
         const v=m.v; if(!v.videoWidth) return;
         if(m.sized && ((paint._pf+_mi)%(window._lowPower?3:2))) return;   // sizing always runs; painting takes turns (a struggling machine paints every 3rd)
+        // sample the VIDEO once per frame into a cheap staging canvas — every
+        // mirror blits from the canvas. video->canvas is the expensive draw
+        // (full color conversion); canvas->canvas is nearly free. same pixels.
+        if(!v._stage){ v._stage=document.createElement('canvas'); v._stageX=v._stage.getContext('2d'); v._stageF=-1; }
+        if(v._stageF!==paint._pf){
+          v._stageF=paint._pf;
+          if(v._stage.width!==v.videoWidth){ v._stage.width=v.videoWidth; v._stage.height=v.videoHeight; }
+          v._stageX.drawImage(v,0,0);
+        }
         if(m.win && !m.sized){
           m.sized=true;
           const h2=Math.round(m.wpx*v.videoHeight/v.videoWidth)+26;
@@ -5169,7 +5196,7 @@ function openRoomFaultBrokenUp(dir, emotion, title){
         let sw,sh,sxx,syy;
         if(vr>cr){ sh=v.videoHeight; sw=sh*cr; sxx=(v.videoWidth-sw)/2; syy=0; }
         else{ sw=v.videoWidth; sh=sw/cr; sxx=0; syy=(v.videoHeight-sh)/2; }
-        ctx.drawImage(v, sxx,syy,sw,sh, 0,0,cw,ch);
+        ctx.drawImage(v._stage, sxx,syy,sw,sh, 0,0,cw,ch);
       });
       requestAnimationFrame(paint);
     })();
@@ -5622,6 +5649,15 @@ function openRoomSaidBrokenUp(dir, emotion, title){
       mirrors.forEach((m,_mi)=>{
         const v=m.v; if(!v.videoWidth) return;
         if(m.sized && ((paint._pf+_mi)%(window._lowPower?3:2))) return;   // sizing always runs; painting takes turns (a struggling machine paints every 3rd)
+        // sample the VIDEO once per frame into a cheap staging canvas — every
+        // mirror blits from the canvas. video->canvas is the expensive draw
+        // (full color conversion); canvas->canvas is nearly free. same pixels.
+        if(!v._stage){ v._stage=document.createElement('canvas'); v._stageX=v._stage.getContext('2d'); v._stageF=-1; }
+        if(v._stageF!==paint._pf){
+          v._stageF=paint._pf;
+          if(v._stage.width!==v.videoWidth){ v._stage.width=v.videoWidth; v._stage.height=v.videoHeight; }
+          v._stageX.drawImage(v,0,0);
+        }
         if(m.win && !m.sized){
           m.sized=true;
           if(!m.fullBg){
@@ -5636,7 +5672,7 @@ function openRoomSaidBrokenUp(dir, emotion, title){
         let sw,sh,sxx,syy;
         if(vr>cr){ sh=v.videoHeight; sw=sh*cr; sxx=(v.videoWidth-sw)/2; syy=0; }
         else{ sw=v.videoWidth; sh=sw/cr; sxx=0; syy=(v.videoHeight-sh)/2; }
-        ctx.drawImage(v, sxx,syy,sw,sh, 0,0,cw,ch);
+        ctx.drawImage(v._stage, sxx,syy,sw,sh, 0,0,cw,ch);
       });
       requestAnimationFrame(paint);
     })();
@@ -8127,6 +8163,8 @@ setInterval(()=>{
       if(v._wdN<2) return;                       // ~6s frozen -> act
       v._wdN=0;
       v._wdR=(v._wdR||0)+1;
+      window._reviveN=(window._reviveN||0)+1;
+      if(!window._lowPower && window._reviveN>=3){ window._lowPower=true; console.warn('low-power mode: on (videos starving)'); }
       if(v._wdR>4) return;                       // four lives, then rest
       let ns=v.src;
       if(ns.indexOf('blob:')!==0 && window._preURL){
