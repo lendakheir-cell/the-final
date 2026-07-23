@@ -6069,21 +6069,6 @@ function openFearRoomBrokenUp(dir, emotion, title){
     // bring it back DOWN so the flood can bury it (clones live at 5,000+).
     (function(){ const sl=document.getElementById('syslog'); if(sl) sl.style.zIndex='90'; })();
 
-    // full-bleed background photo behind everything, if this folder has one — degrades
-    // gracefully (shows nothing) if background.jpg doesn't exist here.
-    const bgPhoto=document.createElement('div');
-    bgPhoto.className='brokenBgText'; bgPhoto._settledRoom=true;
-    bgPhoto.style.cssText='position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:0;'+
-      'pointer-events:none;background:url(\''+dir+'/background.jpg\') center/cover no-repeat;';
-    document.body.appendChild(bgPhoto);
-
-    // texture, multiplied over the background photo + corner text only — not over the windows
-    const texture=document.createElement('div');
-    texture.className='brokenBgText'; texture._settledRoom=true;
-    texture.style.cssText='position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:2;opacity:.9;'+
-      'pointer-events:none;mix-blend-mode:multiply;background:url(\''+dir+'/texure.jpg\') center/cover no-repeat;';
-    document.body.appendChild(texture);
-
 
     // ---- THE FLOOD: moving the mouse is what fills the screen. ----
     // every ~180px of cursor travel, EVERY window breeds one copy.
