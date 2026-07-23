@@ -7994,11 +7994,6 @@ function prefetchRooms(){
     fetch(f, {cache:'force-cache'})
       .then(r=>{ if(!r.ok){ if(/\d+\.mp4$/.test(f)) misses[dir]=(misses[dir]||0)+1; return; }
                  misses[dir]=0;
-                 // RAM discipline: only the FIRST room keeps blob copies in memory.
-                 // every other room is warmed into the browser disk cache only —
-                 // it loads just as fast, and weak machines stop choking on hundreds
-                 // of MB of blobs held forever.
-                 if(dir!==window._nextRoomPick) return;
                  return r.blob().then(b=>{ window._preURL[f]=URL.createObjectURL(b); }); })
       .catch(()=>{})
       .then(()=>{
