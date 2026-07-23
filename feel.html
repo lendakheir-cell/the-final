@@ -4333,8 +4333,10 @@ function openRoomLikeThemBrokenUp(dir, emotion, title){
     const _roomSongs=[];
     (function paint(){
       if(!Object.values(masters).some(v=>document.body.contains(v))) return;
-      mirrors.forEach(m=>{
+      paint._pf=(paint._pf||0)+1;   // alternate-frame painting (the fault/fear rooms' proven trick): half the GPU drawing, invisible to the eye
+      mirrors.forEach((m,_mi)=>{
         const v=m.v; if(!v.videoWidth) return;
+        if(m.sized && ((paint._pf+_mi)%(window._lowPower?3:2))) return;   // sizing always runs; painting takes turns (a struggling machine paints every 3rd)
         if(m.win && !m.sized){
           m.sized=true;
           const h2=Math.round(m.wpx*v.videoHeight/v.videoWidth)+26;
@@ -4691,8 +4693,10 @@ function openRoomLookingBrokenUp(dir, emotion, title){
     const _roomSongs=[];
     (function paint(){
       if(!Object.values(masters).some(v=>document.body.contains(v))) return;
-      mirrors.forEach(m=>{
+      paint._pf=(paint._pf||0)+1;   // alternate-frame painting (the fault/fear rooms' proven trick): half the GPU drawing, invisible to the eye
+      mirrors.forEach((m,_mi)=>{
         const v=m.v; if(!v.videoWidth) return;
+        if(m.sized && ((paint._pf+_mi)%(window._lowPower?3:2))) return;   // sizing always runs; painting takes turns (a struggling machine paints every 3rd)
         if(m.win && !m.sized){
           m.sized=true;
           const bar=m.noBar?0:26;
@@ -4765,7 +4769,7 @@ function openRoomLookingBrokenUp(dir, emotion, title){
     // hovering any visible window swaps ITS video once (window stays, only
     // the picture changes). 5s after the first swap, mouse travel births the
     // 19-tiles in RANDOM order; 5s after that they bomb on their own.
-    const DPR=Math.min(2, window.devicePixelRatio||1);
+    const DPR=window._lowPower ? 1 : Math.min(2, window.devicePixelRatio||1);   // a struggling machine paints at 1x — invisible in motion, huge GPU relief
     const SH19=1;   // the 19-tiles stay FULL size — they must fill the screen edge to edge
     const PHASE1=new Set([1,6,11]), PHASE2=new Set([3,18,15,12]);
     let _n1=0, _n2=0;
@@ -5074,7 +5078,7 @@ function openRoomFaultBrokenUp(dir, emotion, title){
 
     const SW=document.documentElement.clientWidth, SHh=document.documentElement.clientHeight;
     const sx=SW/1920, sy=SHh/1080, ss=Math.min(sx,sy);
-    const DPR=Math.min(2, window.devicePixelRatio||1);
+    const DPR=window._lowPower ? 1 : Math.min(2, window.devicePixelRatio||1);   // a struggling machine paints at 1x — invisible in motion, huge GPU relief
     // window boxes follow the SVG EXACTLY (the canvas cover-crops the video to
     // fill the box), scaled up a touch so neighbors overlap — no gaps — and
     // spread outward so the outer columns START outside the screen.
@@ -5150,8 +5154,10 @@ function openRoomFaultBrokenUp(dir, emotion, title){
     const _roomSongs=[];
     (function paint(){
       if(!Object.values(masters).some(v=>document.body.contains(v))) return;
-      mirrors.forEach(m=>{
+      paint._pf=(paint._pf||0)+1;   // alternate-frame painting (the fault/fear rooms' proven trick): half the GPU drawing, invisible to the eye
+      mirrors.forEach((m,_mi)=>{
         const v=m.v; if(!v.videoWidth) return;
+        if(m.sized && ((paint._pf+_mi)%(window._lowPower?3:2))) return;   // sizing always runs; painting takes turns (a struggling machine paints every 3rd)
         if(m.win && !m.sized){
           m.sized=true;
           const h2=Math.round(m.wpx*v.videoHeight/v.videoWidth)+26;
@@ -5609,11 +5615,13 @@ function openRoomSaidBrokenUp(dir, emotion, title){
     const mirrors=[];
     let _bgWin=null, _relic20=null;
     const _roomSongs=[];
-    const DPR=Math.min(2, window.devicePixelRatio||1);
+    const DPR=window._lowPower ? 1 : Math.min(2, window.devicePixelRatio||1);   // a struggling machine paints at 1x — invisible in motion, huge GPU relief
     (function paint(){
       if(!Object.values(masters).some(v=>document.body.contains(v))) return;
-      mirrors.forEach(m=>{
+      paint._pf=(paint._pf||0)+1;   // alternate-frame painting (the fault/fear rooms' proven trick): half the GPU drawing, invisible to the eye
+      mirrors.forEach((m,_mi)=>{
         const v=m.v; if(!v.videoWidth) return;
+        if(m.sized && ((paint._pf+_mi)%(window._lowPower?3:2))) return;   // sizing always runs; painting takes turns (a struggling machine paints every 3rd)
         if(m.win && !m.sized){
           m.sized=true;
           if(!m.fullBg){
@@ -8078,6 +8086,29 @@ function revealDesktop(){
   }
 })();
 setTimeout(prefetchRooms, 1200);   // the rooms start downloading DURING the install screen
+
+// ---- the sentinel: measures REAL frames-per-second in the background. a strong
+// machine never trips it; a machine that sustains under ~26fps for a while is
+// flagged _lowPower once (sticky), and the paint loops + canvas resolution ease
+// off in ways the eye cannot see. nothing else changes; strong machines are
+// completely unaffected.
+(function(){
+  let frames=0, last=performance.now(), lowStreak=0;
+  function tick(){
+    frames++;
+    const now=performance.now();
+    if(now-last>=2000){
+      const fps=frames*1000/(now-last);
+      frames=0; last=now;
+      if(!window._lowPower){
+        lowStreak = (fps<26) ? lowStreak+1 : 0;
+        if(lowStreak>=3){ window._lowPower=true; console.warn('low-power mode: on ('+fps.toFixed(0)+'fps)'); }
+      }
+    }
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+})();
 
 // ---- the medic v2: every 3s, any video that CLAIMS to play but whose clock
 // froze (~6s) is revived — and crucially, revived FROM THE MEMORY COPY the
