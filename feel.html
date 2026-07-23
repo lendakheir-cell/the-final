@@ -8043,29 +8043,6 @@ function revealDesktop(){
   }
 })();
 setTimeout(prefetchRooms, 1200);   // the rooms start downloading DURING the install screen
-
-// ---- the medic: a GLOBAL video watchdog. every 3s it walks every <video>
-// on screen; one that claims to be playing but whose clock is frozen gets
-// its source re-set (from the blob cache — instant) and a fresh play().
-// two failed revivals and it is left alone (never an infinite loop).
-// this never touches paused, ended, or healthy videos — zero effect on
-// rooms that behave. it only exists so no room can ever hang on one clip.
-setInterval(()=>{
-  document.querySelectorAll('video').forEach(v=>{
-    try{
-      if(v.paused || v.ended || !v.src) { v._wdT=v.currentTime; v._wdN=0; return; }
-      const t=v.currentTime;
-      if(v._wdT===undefined || Math.abs(t-v._wdT)>0.05){ v._wdT=t; v._wdN=0; return; }
-      v._wdN=(v._wdN||0)+1;
-      if(v._wdN<2) return;                    // ~6s frozen -> act
-      v._wdN=0;
-      v._wdR=(v._wdR||0)+1;
-      if(v._wdR>2) return;                    // gave it two lives; stop poking
-      const src=v.src, loop=v.loop;
-      v.src=src; v.loop=loop; v.load(); v.play().catch(()=>{});
-    }catch(_){ }
-  });
-}, 3000);
 // TEMP TEST SHORTCUT — press "c" for the cheese room. DELETE before submit.
 addEventListener('keydown', (e)=>{
   if(e.key==='c' && !e.metaKey && !e.ctrlKey && !e.altKey){
