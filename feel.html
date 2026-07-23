@@ -4076,6 +4076,28 @@ function openRoomEmptyBrokenUp(dir, emotion, title){
     // a missing/broken clip anywhere in the chain: stay where we are and loop.
     v.addEventListener('error',()=>{ if(idx>0){ idx--; _place(CHAIN[idx][1], CHAIN[idx][2]); _playCurrent(); v.loop=true; } });
 
+    // ---- the watchdog: the chain must NEVER stall. every 2s we check whether
+    // the clip actually moved. ~8s frozen -> one reload attempt of the same
+    // clip; frozen again -> we treat it as ended and the chain grows on.
+    (function(){
+      let lastT=-1, still=0, retried=false;
+      const wd=setInterval(()=>{
+        if(!document.body.contains(v)){ clearInterval(wd); return; }
+        if(v.paused || v.ended || v.loop){ lastT=v.currentTime; still=0; return; }
+        if(Math.abs(v.currentTime-lastT)>0.05){ lastT=v.currentTime; still=0; retried=false; return; }
+        if(++still<4) return;                       // ~8s of no motion
+        still=0;
+        if(!retried){                                // attempt 1: reload this clip
+          retried=true;
+          const [vn]=CHAIN[idx];
+          try{ v.src=_vsrc(dir+'/'+vn+'.mp4'); v.load(); v.play().catch(()=>{}); }catch(_){ }
+        } else {                                     // attempt 2 failed: move on
+          retried=false;
+          v.dispatchEvent(new Event('ended'));
+        }
+      }, 2000);
+    })();
+
     // open: video 7, 1000x150, dead center. everything starts here.
     _place(CHAIN[0][1], CHAIN[0][2]);
     _playCurrent();
@@ -7969,6 +7991,11 @@ function prefetchRooms(){
     fetch(f, {cache:'force-cache'})
       .then(r=>{ if(!r.ok){ if(/\d+\.mp4$/.test(f)) misses[dir]=(misses[dir]||0)+1; return; }
                  misses[dir]=0;
+                 // RAM discipline: only the FIRST room keeps blob copies in memory.
+                 // every other room is warmed into the browser disk cache only —
+                 // it loads just as fast, and weak machines stop choking on hundreds
+                 // of MB of blobs held forever.
+                 if(dir!==window._nextRoomPick) return;
                  return r.blob().then(b=>{ window._preURL[f]=URL.createObjectURL(b); }); })
       .catch(()=>{})
       .then(()=>{
