@@ -3206,6 +3206,7 @@ function openRoomFullscreen(emotion, title){
   window._pendingSummary = { emotion, pick };   // written when the room CLOSES, not now
   const isArc = ROOM_DIRS.indexOf(pick) !== -1;   // is this pick an arc-folder?
   setTimeout(()=>{
+    _blobifyRoom(pick, ()=>{   // the room builds ONLY from memory copies — loops never stall
     if(pick === 'rooms/how much i gave you') openRoomBrokenUp(pick, emotion, title);
     else if(pick === 'rooms/how afraid i am') openFearRoomBrokenUp(pick, emotion, title);
     else if(pick === 'rooms/i gave until i was empty') openRoomEmptyBrokenUp(pick, emotion, title);
@@ -3214,6 +3215,7 @@ function openRoomFullscreen(emotion, title){
     else if(pick === 'rooms/something i said') openRoomSaidBrokenUp(pick, emotion, title);
     else if(pick === 'rooms/that it wasnt my fault') openRoomFaultBrokenUp(pick, emotion, title);
     else openRoomArc(pick, emotion, title);
+    });
   }, GLITCH_MS);   // room appears right as the glitch ends
 }
 
@@ -7960,6 +7962,37 @@ function closeRoomForFolder(){
 window._preURL={};   // url -> blob url of an already-downloaded room file
 // every room file plays from memory if the prefetch already fetched it — zero network
 function _vsrc(p){ return (window._preURL && window._preURL[p]) || p; }
+// ---- rooms open FROM MEMORY. before a room builds, every file it might use is
+// pulled into a blob (most are already in the disk cache from the prefetch, so
+// this is usually instant). a video looping from memory never stalls at the
+// loop point — which is exactly where network-streamed masters were freezing.
+function _blobifyRoom(dir, done){
+  const files=[dir+'/background.mp4', dir+'/background.jpeg', dir+'/sound.mp3', dir+'/sound.m4a',
+               dir+'/fx.m4a', dir+'/grow.m4a', dir+'/radiostatic.m4a'];
+  for(let i=1;i<=8;i++) files.push(dir+'/radio'+i+'.m4a');
+  for(let i=1;i<=6;i++) files.push(dir+'/fx'+i+'.m4a');
+  for(let i=1;i<=40;i++) files.push(dir+'/'+i+'.mp4');
+  let k=0, pend=0, mis=0, fired=false;
+  const fin=()=>{ if(!fired && pend===0 && k>=files.length){ fired=true; done(); } };
+  const pump=()=>{
+    while(k<files.length && pend<6){
+      const f=files[k++];
+      if(window._preURL[f]) continue;
+      pend++;
+      fetch(f, {cache:'force-cache'})
+        .then(r=>{ if(!r.ok){ if(/\d+\.mp4$/.test(f)) mis++; return; }
+                   if(/\d+\.mp4$/.test(f)) mis=0;
+                   return r.blob().then(b=>{ window._preURL[f]=URL.createObjectURL(b); }); })
+        .catch(()=>{})
+        .then(()=>{ pend--; if(mis>=3) k=files.length; pump(); });
+    }
+    fin();
+  };
+  pump();
+  // hard ceiling: whatever happens, the room opens within 12s — never a dead click
+  setTimeout(()=>{ if(!fired){ fired=true; done(); } }, 12000);
+}
+
 function prefetchRooms(){
   if(window._prefetchStarted) return; window._prefetchStarted=true;
   // the FIRST room is decided right now — so it downloads first, audio and all,
@@ -8036,13 +8069,45 @@ function revealDesktop(){
     const sl=document.getElementById('syslog'); if(sl) sl.style.display='none';
     const br=document.getElementById('brand'); if(br) br.style.display='none';   // no words at all — image and button only
     _introShown=true;
-    openFearRoomBrokenUp('rooms/how afraid i am', 'fear', 'how afraid i am');
-    setTimeout(()=>{ if(window._showSaverButton) window._showSaverButton(); }, 50);   // its IIFE is defined further down the file
+    _blobifyRoom('rooms/how afraid i am', ()=>{   // the saver's room also runs from memory — no loop stalls
+      openFearRoomBrokenUp('rooms/how afraid i am', 'fear', 'how afraid i am');
+      setTimeout(()=>{ if(window._showSaverButton) window._showSaverButton(); }, 50);   // its IIFE is defined further down the file
+    });
   } else {
     openInstallScreen();   // the real opening — the desktop reveals only after install
   }
 })();
 setTimeout(prefetchRooms, 1200);   // the rooms start downloading DURING the install screen
+
+// ---- the medic v2: every 3s, any video that CLAIMS to play but whose clock
+// froze (~6s) is revived — and crucially, revived FROM THE MEMORY COPY the
+// prefetch has usually finished by then, instead of the network request that
+// choked it. paused/ended/healthy videos are never touched; four failed
+// revivals and the element is left alone forever.
+setInterval(()=>{
+  document.querySelectorAll('video').forEach(v=>{
+    try{
+      if(v.paused || v.ended || !v.src){ v._wdT=undefined; v._wdN=0; return; }
+      const t=v.currentTime;
+      const stuck=(v._wdT!==undefined && Math.abs(t-v._wdT)<=0.05);
+      v._wdT=t;
+      if(!stuck){ v._wdN=0; return; }
+      v._wdN=(v._wdN||0)+1;
+      if(v._wdN<2) return;                       // ~6s frozen -> act
+      v._wdN=0;
+      v._wdR=(v._wdR||0)+1;
+      if(v._wdR>4) return;                       // four lives, then rest
+      let ns=v.src;
+      if(ns.indexOf('blob:')!==0 && window._preURL){
+        for(const k in window._preURL){
+          if(ns.indexOf(encodeURI(k))>=0){ ns=window._preURL[k]; break; }   // the memory copy arrived — take it
+        }
+      }
+      const loop=v.loop;
+      v.src=ns; v.loop=loop; v.load(); v.play().catch(()=>{});
+    }catch(_){ }
+  });
+}, 3000);
 // TEMP TEST SHORTCUT — press "c" for the cheese room. DELETE before submit.
 addEventListener('keydown', (e)=>{
   if(e.key==='c' && !e.metaKey && !e.ctrlKey && !e.altKey){
