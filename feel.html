@@ -4607,11 +4607,11 @@ function openRoomLookingBrokenUp(dir, emotion, title){
       [1600,812,237,282,15],
       [1494,810,237,282,15],
       [1388,810,237,282,15],
-      [1382,748,135,134,3],
-      [1382,811,135,134,3],
-      [1382,873,135,134,3],
-      [1382,935,135,134,3],
-      [1382,998,135,134,3],
+      [1422,748,135,134,3],
+      [1422,811,135,134,3],
+      [1422,873,135,134,3],
+      [1422,935,135,134,3],
+      [1422,998,135,134,3],
       [382,-27,161,160,3],
       [382,40,161,160,3],
       [382,107,161,160,3],
@@ -4915,8 +4915,8 @@ function openRoomLookingBrokenUp(dir, emotion, title){
       }
       // hover ANYWHERE: one touch swaps EVERY swappable video at once
       // (windows stay put — only the pictures change), and the camera goes glitch.
-      win.addEventListener('mouseenter', ()=>{
-        if(!_swapArmed || win.style.opacity!=='1') return;
+      win.addEventListener('mousemove', ()=>{
+        if(_swapSeen || !_swapArmed || win.style.opacity!=='1') return;
         _onFirstSwap();
       });
 
