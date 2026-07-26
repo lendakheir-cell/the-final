@@ -144,7 +144,9 @@ body.shaking{ animation:none; }
   .dot{ width:22px; height:22px; border-radius:50%; border:1px solid rgba(120,120,120,.55);
         display:inline-flex; align-items:center; justify-content:center;
         color:rgba(120,120,120,.85); line-height:0; vertical-align:middle; flex:0 0 auto; }
-  .dot svg{ display:block; width:11px; height:11px; }
+  .dot{ position:relative; }
+  .dot svg{ display:block; width:11px; height:11px;
+        position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); }
   .dot svg line{ stroke:currentColor; stroke-width:1.3; stroke-linecap:round; }
   .dot:hover{ background:rgba(255,255,255,.12); cursor:pointer; }
   .title{ font-size:var(--size); letter-spacing:.4px; white-space:nowrap;
@@ -7001,9 +7003,10 @@ const GRABBINGCUR="url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000
   st.textContent=
     'html,body,.win,.win .body,.folder,.journal,.snd,.songwin,.trap,.subgrid,.subgrid-inner,.log,.histhalf{cursor:'+ARROWCUR+';}'+
     '.folder:hover,.dot:hover,.subfolder,.choicebtn,.ynbtn,.songbtn,.songimg,button{cursor:'+POINTCUR+' !important;}'+
-    '[style*="cursor:pointer"]{cursor:'+POINTCUR+' !important;}'+
+    '[style*="cursor:pointer"],[style*="cursor: pointer"]{cursor:'+POINTCUR+' !important;}'+
     'input,textarea{cursor:'+TEXTCUR+' !important;}'+
-    '.bar,.journal .bar,.songdrag,[style*="cursor:grab"]{cursor:'+GRABCUR+' !important;}'+
+    '.bar,.journal .bar,.songdrag,[style*="cursor:grab"],[style*="cursor: grab"]{cursor:'+GRABCUR+' !important;}'+
+    '[style*="cursor: grabbing"]{cursor:'+GRABBINGCUR+' !important;}'+
     '.bar.grabbing,.folder.dragging,.eye:active,.eye:active canvas{cursor:'+GRABBINGCUR+' !important;}';
   document.head.appendChild(st);
 })();
