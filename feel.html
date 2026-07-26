@@ -4590,6 +4590,10 @@ function openRoomLookingBrokenUp(dir, emotion, title){
       [50,741,197,438,6],
       [163,741,197,438,6],
       [276,741,197,438,6],
+      [1705,812,237,282,15],
+      [1600,812,237,282,15],
+      [1494,810,237,282,15],
+      [1388,810,237,282,15],
       [1612,477,356,290,12],
       [1441,477,356,290,12],
       [1270,477,356,290,12],
@@ -4603,10 +4607,6 @@ function openRoomLookingBrokenUp(dir, emotion, title){
       [112,80,379,458,1],
       [338,80,379,458,1],
       [415,0,1090,1080,8],
-      [1705,812,237,282,15],
-      [1600,812,237,282,15],
-      [1494,810,237,282,15],
-      [1388,810,237,282,15],
       [1422,748,135,134,3],
       [1422,811,135,134,3],
       [1422,873,135,134,3],
@@ -7765,7 +7765,7 @@ function openInstallScreen(){
   let drag=false, ox=0, oy=0;
 
   file.addEventListener('mousedown',e=>{
-    drag=true; file.style.cursor='grabbing';
+    drag=true; file.style.cursor=GRABBINGCUR;   // OUR holding hand, not the browser's
     file.style.position='relative'; file.style.zIndex='5';
     ox=e.clientX; oy=e.clientY; e.preventDefault();
   });
@@ -7781,7 +7781,7 @@ function openInstallScreen(){
   });
   addEventListener('mouseup',e=>{
     if(!drag) return;
-    drag=false; file.style.cursor='grab';
+    drag=false; file.style.cursor=GRABCUR;
     const r=me.getBoundingClientRect();
     const inside = e.clientX>r.left-30 && e.clientX<r.right+30 &&
                    e.clientY>r.top-30 && e.clientY<r.bottom+30;
