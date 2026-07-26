@@ -2657,10 +2657,7 @@ const EYE_CROPS = {
 // 2) scanline build: shifting thin lines are erased every frame, so with the
 //    feedback buffer the picture is literally BUILT from strips, like the install screen.
 // 3) vertical pixel melt: slices stretched up/down, TV-bar direction.
-let _glitchOn=true;   // TEMP DEBUG — press "x" to toggle the glitch live. DELETE before submit.
-addEventListener('keydown', e=>{
-  if(e.key==='x'){ _glitchOn=!_glitchOn; try{ sysLog('glitch', _glitchOn?'on':'off'); }catch(_){} }
-});
+let _glitchOn=true;
 function glitchPass(cx, cv, W, H){
   if(!_glitchOn) return;
   try{
@@ -8141,62 +8138,7 @@ setInterval(()=>{
     }catch(_){ }
   });
 }, 3000);
-// TEMP TEST SHORTCUT — press "c" for the cheese room. DELETE before submit.
-addEventListener('keydown', (e)=>{
-  if(e.key==='c' && !e.metaKey && !e.ctrlKey && !e.altKey){
-    openRoomEmptyBrokenUp('rooms/i gave until i was empty', 'giving', 'i gave until i was empty');
-  }
-});
-// TEMP TEST SHORTCUT — press "g" to open "how much i gave you" broken-up. DELETE before submit.
-addEventListener('keydown', (e)=>{
-  if(e.key==='g' && !e.metaKey && !e.ctrlKey && !e.altKey){
-    openRoomBrokenUp('rooms/how much i gave you', 'giving', 'how much i gave you');
-  }
-});
-// TEMP TEST SHORTCUT — press "m" to launch the 20-level folder maze "The fear it comes back". DELETE before submit.
-addEventListener('keydown', (e)=>{
-  if(e.key==='m' && !e.metaKey && !e.ctrlKey && !e.altKey){
-    const core=FOLDERS.find(f=>f.label==='The fear it comes back');
-    if(core && core.journey){ startJourney(core.journey, core.label, core.fall, core.cam, core.endEmo, core.fearRoom, null); }
-  }
-});
-// TEMP TEST SHORTCUT — press "s" to launch the cut2 song journey. DELETE before submit.
-addEventListener('keydown', (e)=>{
-  if(e.key==='s' && !e.metaKey && !e.ctrlKey && !e.altKey){
-    const core=FOLDERS.find(f=>f.label==='The moment I gave up');
-    if(core && core.journey){ startJourney(core.journey, core.label, core.fall, core.cam, core.endEmo, core.fearRoom, null); }
-  }
-});
-// TEMP TEST SHORTCUT — press "l" to open "i think i might like them" broken-up. DELETE before submit.
-addEventListener('keydown', (e)=>{
-  if(e.key==='l' && !e.metaKey && !e.ctrlKey && !e.altKey){
-    openRoomLikeThemBrokenUp('rooms/i think i might like them', 'warm', 'i think i might like them');
-  }
-});
-// TEMP TEST SHORTCUT — press "w" for the looking room. DELETE before submit.
-addEventListener('keydown', (e)=>{
-  if(e.key==='w' && !e.metaKey && !e.ctrlKey && !e.altKey){   // TEMP - DELETE before submit
-    openRoomLookingBrokenUp('rooms/when they stopped looking at me', 'alone', 'when they stopped looking at me');
-  }
-});
-// TEMP TEST SHORTCUT — press "t" to open "that it wasnt my fault" broken-up. DELETE before submit.
-addEventListener('keydown', (e)=>{
-  if(e.key==='t' && !e.metaKey && !e.ctrlKey && !e.altKey){
-    openRoomFaultBrokenUp('rooms/that it wasnt my fault', 'anger', 'that it wasnt my fault');
-  }
-});
-// TEMP TEST SHORTCUT — press "d" to open "something i said" broken-up. DELETE before submit.
-addEventListener('keydown', (e)=>{
-  if(e.key==='d' && !e.metaKey && !e.ctrlKey && !e.altKey){
-    openRoomSaidBrokenUp('rooms/something i said', 'anger', 'something i said');
-  }
-});
-// TEMP TEST SHORTCUT — press "f" to open "how afraid i am" broken-up. DELETE before submit.
-addEventListener('keydown', (e)=>{
-  if(e.key==='f' && !e.metaKey && !e.ctrlKey && !e.altKey){
-    openFearRoomBrokenUp('rooms/how afraid i am', 'fear', 'how afraid i am');
-  }
-});
+
 //layoutDesktop();
 
 // ---- exhibition screensaver: 60 quiet seconds -> the film takes the screen.
@@ -8231,10 +8173,7 @@ addEventListener('keydown', (e)=>{
   window._armScreensaver=()=>{ if(armed || window._saverMode) return; armed=true; arm(); };
   ['mousemove','mousedown','keydown','touchstart'].forEach(ev=>
     addEventListener(ev, ()=>{ if(armed && !saver) arm(); }, true));   // while the saver is up, only its X and button decide
-  // TEMP TEST SHORTCUT — press "e" to fire the error meltdown now. DELETE before submit.
-  addEventListener('keydown',(e)=>{ if(e.key==='e' && !e.metaKey && !e.ctrlKey && !e.altKey) breakSystem(null, Math.random()<0.5, 'I never sent it'); });
-  // TEMP TEST SHORTCUT — press "i" to enter saver mode now. DELETE before submit.
-  addEventListener('keydown',(e)=>{ if(e.key==='i' && !e.metaKey && !e.ctrlKey && !e.altKey){ try{ sessionStorage.setItem('feelSaver','1'); }catch(_){} location.reload(); } });
+
 })();
 // ---- the settled small room asks before it leaves ----
 document.addEventListener('click', (e)=>{
